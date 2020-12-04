@@ -18,18 +18,18 @@ export interface Capabilities {
 }
 
 export class BaseModel {
-  data: IoTObject;
-  state: ObjectState;
-  type: string;
+  public data: IoTObject;
+  public state: ObjectState;
+  public store: string = '';
 
-  constructor(id: string, name: string) {
+  constructor(id: string, name: string, store: string) {
     this.data = {
       id,
       name,
       capabilities: {}
     };
     this.state = { objectId: id };
-    this.type = 'light';
+    this.store = store;
   }
 
   public addCapabilities(name: string, capability: CapabilityAccessor) {

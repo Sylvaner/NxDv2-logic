@@ -15,24 +15,27 @@ export class StoreService extends DbService {
     return StoreService.instance!;
   }
 
-  public async save(type: string, objectToSave: IoTObject): Promise<IoTObject> {
-    if (this.collections[type] === undefined) {
-      this.collections[type] = this.database!.collection(type);
+  public async save(store: string, objectToSave: IoTObject): Promise<IoTObject> {
+    if (this.collections[store] === undefined) {
+      this.collections[store] = this.database!.collection(store);
     }
     if (objectToSave !== null) {
       if (objectToSave._id === undefined) {
-        await this.collections[type].insertOne(objectToSave);
+        await this.collections[store].insertOne(objectToSave);
       } else {
-        await this.collections[type].replaceOne({ _id: objectToSave._id }, objectToSave);
+        await this.collections[store].replaceOne({ _id: objectToSave._id }, objectToSave);
       }
     }
     return objectToSave;
   }
 
-  public getObject(type: string, objectId: string): Promise<IoTObject> {
+  public getObject(store: string, objectId: string): Promise<IoTObject> {
     return new Promise((resolve, reject) => {
-      this.collections[type].findOne({ id: objectId }).then((targetObject) => {
-        resolve(<IoTObject>targetObject);
+      if (this.collections[store] === undefined) {
+        reject();
+      }
+      this.collections[store].findOne({ id: objectId }).then((targetObject) => {
+        resolve(targetObject);
       }).catch(() => {
         reject();
       });

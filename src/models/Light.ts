@@ -11,7 +11,7 @@ export class Light extends BaseModel {
   public state: LightState;
 
   constructor(id: string, name: string) {
-    super(id, name);
+    super(id, name, 'lights');
     this.state = { objectId: id }
   }
 };

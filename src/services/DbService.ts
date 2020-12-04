@@ -1,7 +1,4 @@
 import { MongoClient, Db, Collection } from 'mongodb';
-//import { IoTObject } from '../models/BaseModel';
-//import { Light } from '../models/Light';
-
 interface CollectionIndex {
   [key: string]: Collection
 }

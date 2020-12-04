@@ -5,7 +5,6 @@ COPY src /app/src/
 RUN cd /app && \
     npm install && \
     npm run build 
-RUN ls /app/ && sleep 10
 
 FROM node:15.3.0-buster
 COPY --from=0 /app/dist /app/dist
