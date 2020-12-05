@@ -11,22 +11,39 @@ export class Hue implements Plugin {
     lights: new Map<string, Light>()
   }
 
-  getCache() {
-    return this.cache;
-  }
-
+  /**
+   * Get plugin name
+   *
+   * @returns Plugin name
+   */
   getName(): string {
     return 'Philips Hue';
   }
 
+  /**
+   * Get Mqtt topic prefix for matches
+   *
+   * @return Mqtt topic prefix
+   */
   getTopicPrefix(): string {
     return 'hue';
   }
 
+  /**
+   * Get topic to subscribe
+   *
+   * @returns Topic to subscribe
+   */
   getSubscribeTopic(): string {
     return 'hue/status/lights/#';
   }
 
+  /**
+   * Parse message from Mqtt
+   *
+   * @param topic Source topic of the message
+   * @param message Message to parse
+   */
   async messageHandler(topic: string, message: Buffer) {
     // Le nom de l'objet se trouve dans la topic
     const lightState: RegExp = /^hue\/status\/lights\/(.*)$/;
@@ -37,13 +54,19 @@ export class Hue implements Plugin {
       const lightData = JSON.parse(message.toString());
       let light: Light;
       const lightId = 'hue-' + lightName;
-      // Création de l'objet en cache
-      if (!this.cache.lights.has(lightId)) {
+      // Test if object is in cache
+      if (this.cache.lights.has(lightId)) {
+        // Object from cache
+        light = this.cache.lights.get(lightId) as Light;
+      }
+      else {
+        // Try to load from database
         light = new Light(lightId, lightName);
         try {
           light.data = await StoreService.getInstance().getObject('lights', lightId);
         }
         catch (_) {
+          // First time, create a new object
           const dataTopic = 'hue/status/lights/' + lightName;
           light.addCapabilities('reachable', { get: { topic: dataTopic, path: 'hue_state.reachable' } });
           light.addCapabilities('state', { get: { topic: dataTopic, path: 'hue_state.on' } });
@@ -51,11 +74,7 @@ export class Hue implements Plugin {
           light.data = await StoreService.getInstance().save(light.store, light.data);
         }
       }
-      else {
-        // Récupération de l'objet depuis le cache
-        light = this.cache.lights.get(lightId) as Light;
-      }
-      // Mise à jour des informations
+      // Update state
       if (light !== undefined) {
         light.state.state = lightData.hue_state.on;
         light.state.brightness = lightData.hue_state.bri;

@@ -9,6 +9,5 @@ RUN cd /app && \
 FROM node:15.3.0-buster
 COPY --from=0 /app/dist /app/dist
 COPY --from=0 /app/node_modules /app/node_modules
-RUN ls -al /app && sleep 5
-RUN ls -al /app/dist && sleep 5
+COPY .env /app/.env 
 CMD ["node", "/app/dist/app.js"]

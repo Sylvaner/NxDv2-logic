@@ -4,33 +4,14 @@ import { StoreService } from './services/StoreService';
 import { StateService } from './services/StateService';
 import { MqttConfig } from './interfaces/MqttConfig';
 import { MqttService } from './services/MqttService';
+import * as dotenv from 'dotenv';
 
-const mqttConfig: MqttConfig = {
-  login: 'nextdom',
-  password: 'mosquittopassword',
-  server: 'nextdom-v2'
-};
-
-const storeCredentials = {
-  host: 'nextdom-db',
-  database: 'nextdom',
-  user: 'nextdom',
-  password: 'admin'
-}
-
-const stateCredentials = {
-  host: 'nextdom-db',
-  database: 'nextdomstate',
-  user: 'nextdom',
-  password: 'admin'
-}
-
-const enabledPlugins = ['Hue'];
-const availablePlugins = new Map<string, any>();
-availablePlugins.set('Hue', Hue);
-
+/**
+ * Called on Mqtt connection
+ * @param plugins Loaded plugins
+ */
 function mqttConnected(plugins: Map<string, Plugin>): void {
-  // Liste des topics à inscrire
+  // List of all topics to subscribe
   const topicsToSubscribe: string[] = [];
 
   plugins.forEach((translator) => {
@@ -40,7 +21,11 @@ function mqttConnected(plugins: Map<string, Plugin>): void {
   mqttConnector.multipleSubscribes(topicsToSubscribe, mqttMessageParser);
 }
 
-// Gestion des messages
+/**
+ * Send message from topic to the good plugins
+ * @param topic Source topic
+ * @param message Message received
+ */
 function mqttMessageParser(topic: string, message: Buffer): void {
   // Recherche du plugin concerné
   // TODO: Trouver une méthode qui évite un parcours à chaque fois
@@ -52,7 +37,9 @@ function mqttMessageParser(topic: string, message: Buffer): void {
 }
 
 /**
- * Initialise la liste des plugins
+ * Load all enabled plugins
+ * 
+ * @returns List of plugin instances
  */
 function initPlugins(): Map<string, Plugin> {
   const plugins = new Map<string, Plugin>();
@@ -64,6 +51,35 @@ function initPlugins(): Map<string, Plugin> {
   return plugins;
 }
 
+// List of plugins
+const enabledPlugins = ['Hue'];
+const availablePlugins = new Map<string, any>();
+availablePlugins.set('Hue', Hue);
+
+// Read config
+dotenv.config({ path: `${__dirname}/../.env` });
+
+const mqttConfig: MqttConfig = {
+  login: process.env.MQTT_USER!,
+  password: process.env.MQTT_PASSWORD!,
+  server: process.env.MQTT_SERVER!
+};
+
+const storeCredentials = {
+  host: process.env.DB_HOST!,
+  database: process.env.DB_DATABASE!,
+  user: process.env.DB_USER!,
+  password: process.env.DB_PASSWORD!
+}
+
+const stateCredentials = {
+  host: process.env.DB_HOST!,
+  database: process.env.DB_STATE_DATABASE!,
+  user: process.env.DB_USER!,
+  password: process.env.DB_PASSWORD!
+}
+
+// Entry point
 const mqttConnector = new MqttService(mqttConfig);
 const messageParsers = new Map<string, Plugin>();
 
