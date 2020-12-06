@@ -62,7 +62,7 @@ dotenv.config({ path: `${__dirname}/../.env` });
 const mqttConfig: MqttConfig = {
   login: process.env.MQTT_USER!,
   password: process.env.MQTT_PASSWORD!,
-  server: process.env.MQTT_SERVER!
+  server: process.env.MQTT_HOST!
 };
 
 const storeCredentials = {

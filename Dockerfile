@@ -10,4 +10,5 @@ FROM node:15.3.0-buster
 COPY --from=0 /app/dist /app/dist
 COPY --from=0 /app/node_modules /app/node_modules
 COPY .env /app/.env 
-CMD ["node", "/app/dist/app.js"]
+WORKDIR /app
+CMD ["node", "dist/app.js"]
