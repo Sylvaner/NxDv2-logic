@@ -12,6 +12,6 @@ export class Light extends BaseModel {
 
   constructor(id: string, name: string) {
     super(id, name, 'lights');
-    this.state = { objectId: id }
+    this.state = { objectId: id, date: Date.now() };
   }
 };

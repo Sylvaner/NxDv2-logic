@@ -1,4 +1,5 @@
 import { Hue } from './plugins/hue';
+import { PHue } from './plugins/phue';
 import { Plugin } from './plugins/plugin';
 import { StoreService } from './services/StoreService';
 import { StateService } from './services/StateService';
@@ -52,9 +53,10 @@ function initPlugins(): Map<string, Plugin> {
 }
 
 // List of plugins
-const enabledPlugins = ['Hue'];
+const enabledPlugins = ['Hue', 'PHue'];
 const availablePlugins = new Map<string, any>();
 availablePlugins.set('Hue', Hue);
+availablePlugins.set('PHue', PHue);
 
 // Read config
 dotenv.config({ path: `${__dirname}/../.env` });

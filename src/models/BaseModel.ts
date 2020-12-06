@@ -28,7 +28,7 @@ export class BaseModel {
       name,
       capabilities: {}
     };
-    this.state = { objectId: id };
+    this.state = { objectId: id, date: Date.now() };
     this.store = store;
   }
 
