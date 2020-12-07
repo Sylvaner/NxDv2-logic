@@ -1,7 +1,7 @@
 import { MqttAccessDesc } from '../interfaces/MqttAccessDesc';
-import ObjectState from './ObjectState';
+import DeviceState from './DeviceState';
 
-export interface IoTObject {
+export interface DeviceData {
   _id?: string
   id: string
   name: string
@@ -17,19 +17,19 @@ export interface Capabilities {
   [capabilityName: string]: CapabilityAccessor
 }
 
-export class BaseModel {
-  public data: IoTObject;
-  public state: ObjectState;
-  public store: string = '';
+export class Device {
+  public data: DeviceData;
+  public state: DeviceState;
+  public deviceType: string = '';
 
-  constructor(id: string, name: string, store: string) {
+  constructor(id: string, name: string, deviceType: string) {
     this.data = {
       id,
       name,
       capabilities: {}
     };
-    this.state = { objectId: id, date: Date.now() };
-    this.store = store;
+    this.state = { deviceId: id, date: Date.now() };
+    this.deviceType = deviceType;
   }
 
   public addCapabilities(name: string, capability: CapabilityAccessor) {

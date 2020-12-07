@@ -48,27 +48,27 @@ export class PHue implements Plugin {
    */
   async messageHandler(topic: string, message: Buffer) {
     // Data extraction from topic
-    const objectRegex = /^phue\/(.*)\/(.*)$/;
-    const extractedData = objectRegex.exec(topic);
+    const deviceRegex = /^phue\/(.*)\/(.*)$/;
+    const extractedData = deviceRegex.exec(topic);
     if (extractedData !== null) {
-      const objectData = JSON.parse(message.toString());
-      const objectId = `phue-${extractedData[1]}-${objectData.id}`;
+      const deviceData = JSON.parse(message.toString());
+      const deviceId = `phue-${extractedData[1]}-${deviceData.id}`;
       switch (extractedData[1]) {
         case 'lights':
         case 'groups':
           let light: Light;
-          // Test if object is in cache
-          if (this.cache.lights.has(objectId)) {
-            // Object from cache
-            light = this.cache.lights.get(objectId) as Light;
+          // Test if device is in cache
+          if (this.cache.lights.has(deviceId)) {
+            // Device from cache
+            light = this.cache.lights.get(deviceId) as Light;
           }
           else {
             // Try to load from database
-            light = new Light(objectId, objectData.name);
-            const lightData = await StoreService.getInstance().getObject('lights', objectId);
+            light = new Light(deviceId, deviceData.name);
+            const lightData = await StoreService.getInstance().getDevice(deviceId);
             if (lightData === null) {
-              // First time, create a new object
-              const dataTopic = `phue/${extractedData[1]}/${objectData.id}`;
+              // First time, create a new device
+              const dataTopic = `phue/${extractedData[1]}/${deviceData.id}`;
               light.addCapabilities('reachable', {
                 get: { topic: dataTopic, path: 'state.reachable' },
                 set: { topic: dataTopic + '/set', path: 'reachable' }
@@ -81,50 +81,50 @@ export class PHue implements Plugin {
                 get: { topic: dataTopic, path: 'bri' },
                 set: { topic: dataTopic + '/set', path: 'bri' }
               });
-              light.data = await StoreService.getInstance().save(light.store, light.data);
+              light.data = await StoreService.getInstance().save(light.data);
             } else {
               light.data = lightData;
             }
           }
           // Update state
           if (light !== undefined) {
-            light.state.state = objectData.state.on;
-            light.state.brightness = objectData.state.bri;
-            light.state.reachable = objectData.state.reachable;
-            light.state = await StateService.getInstance().save(objectId, light.state);
-            this.cache.lights.set(objectId, light);
+            light.state.state = deviceData.state.on;
+            light.state.brightness = deviceData.state.bri;
+            light.state.reachable = deviceData.state.reachable;
+            light.state = await StateService.getInstance().save(deviceId, light.state);
+            this.cache.lights.set(deviceId, light);
           }
           break;
         case 'sensors':
           let sensor: Sensor;
-          // Test if object is in cache
-          if (this.cache.sensors.has(objectId)) {
-            // Object from cache
-            sensor = this.cache.sensors.get(objectId) as Light;
+          // Test if device is in cache
+          if (this.cache.sensors.has(deviceId)) {
+            // Device from cache
+            sensor = this.cache.sensors.get(deviceId) as Light;
           }
           else {
             // Try to load from database
-            sensor = new Sensor(objectId, objectData.name);
-            const sensorData = await StoreService.getInstance().getObject('sensors', objectId);
+            sensor = new Sensor(deviceId, deviceData.name);
+            const sensorData = await StoreService.getInstance().getDevice(deviceId);
             if (sensorData === null) {
-              // First time, create a new object
-              const dataTopic = `phue/${extractedData[1]}/${objectData.id}`;
-              if (objectData.state.hasOwnProperty('buttonevent')) {
+              // First time, create a new device
+              const dataTopic = `phue/${extractedData[1]}/${deviceData.id}`;
+              if (deviceData.state.hasOwnProperty('buttonevent')) {
                 sensor.addCapabilities('button', {
                   get: { topic: dataTopic, path: 'state.buttonevent' }
                 });
               }
-              sensor.data = await StoreService.getInstance().save(sensor.store, sensor.data);
+              sensor.data = await StoreService.getInstance().save(sensor.data);
             } else {
               sensor.data = sensorData;
             }
           }
           // Update state
           if (sensor !== undefined) {
-            if (objectData.state.hasOwnProperty('buttonevent')) {
-              sensor.state.button = objectData.state.buttonevent;
+            if (deviceData.state.hasOwnProperty('buttonevent')) {
+              sensor.state.button = deviceData.state.buttonevent;
             }
-            this.cache.sensors.set(objectId, sensor);
+            this.cache.sensors.set(deviceId, sensor);
           }
           break;
       }

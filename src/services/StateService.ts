@@ -1,4 +1,4 @@
-import ObjectState from '../models/ObjectState';
+import DeviceState from '../models/DeviceState';
 import { DbService } from './DbService';
 
 
@@ -17,11 +17,11 @@ export class StateService extends DbService {
     return StateService.instance!;
   }
 
-  public async save(objectId: string, stateToSave: ObjectState): Promise<ObjectState> {
+  public async save(deviceId: string, stateToSave: DeviceState): Promise<DeviceState> {
     if (this.collections[this.statesCollection] === undefined) {
       this.collections[this.statesCollection] = this.database!.collection(this.statesCollection);
     }
-    await this.collections[this.statesCollection].replaceOne({ objectId }, stateToSave, { upsert: true });
+    await this.collections[this.statesCollection].replaceOne({ deviceId }, stateToSave, { upsert: true });
     return stateToSave;
   }
 }

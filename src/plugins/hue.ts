@@ -54,24 +54,24 @@ export class Hue implements Plugin {
       const lightData = JSON.parse(message.toString());
       let light: Light;
       const lightId = 'hue-' + lightName;
-      // Test if object is in cache
+      // Test if device is in cache
       if (this.cache.lights.has(lightId)) {
-        // Object from cache
+        // Device from cache
         light = this.cache.lights.get(lightId) as Light;
       }
       else {
         // Try to load from database
         light = new Light(lightId, lightName);
         try {
-          light.data = await StoreService.getInstance().getObject('lights', lightId);
+          light.data = await StoreService.getInstance().getDevice(lightId);
         }
         catch (_) {
-          // First time, create a new object
+          // First time, create a new device
           const dataTopic = 'hue/status/lights/' + lightName;
           light.addCapabilities('reachable', { get: { topic: dataTopic, path: 'hue_state.reachable' } });
           light.addCapabilities('state', { get: { topic: dataTopic, path: 'hue_state.on' } });
           light.addCapabilities('brightness', { get: { topic: dataTopic, path: 'hue_state.bri' } });
-          light.data = await StoreService.getInstance().save(light.store, light.data);
+          light.data = await StoreService.getInstance().save(light.data);
         }
       }
       // Update state

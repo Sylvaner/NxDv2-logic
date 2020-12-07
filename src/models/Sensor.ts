@@ -1,16 +1,16 @@
-import { BaseModel } from './BaseModel';
-import ObjectState from './ObjectState';
+import { Device } from './Device';
+import DeviceState from './DeviceState';
 
-interface SensorState extends ObjectState {
+interface SensorState extends DeviceState {
   event?: string,
   button?: string
 }
 
-export class Sensor extends BaseModel {
+export class Sensor extends Device {
   public state: SensorState;
 
   constructor(id: string, name: string) {
-    super(id, name, 'sensors');
-    this.state = { objectId: id, date: Date.now() };
+    super(id, name, 'sensor');
+    this.state = { deviceId: id, date: Date.now() };
   }
 };

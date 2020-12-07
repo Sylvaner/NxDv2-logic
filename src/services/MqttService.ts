@@ -67,7 +67,7 @@ export class MqttService {
    * Publish message on topic
    *
    * @param topic Target topic
-   * @param data JSON object stringify in process
+   * @param data JSON device stringify in process
    */
   public publish(topic: string, data: object): void {
     this.mqttClient.publish(topic, JSON.stringify(data));
