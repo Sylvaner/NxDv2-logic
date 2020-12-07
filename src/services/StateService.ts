@@ -21,7 +21,7 @@ export class StateService extends DbService {
     if (this.collections[this.statesCollection] === undefined) {
       this.collections[this.statesCollection] = this.database!.collection(this.statesCollection);
     }
-    await this.collections[this.statesCollection].replaceOne({ deviceId }, stateToSave, { upsert: true });
+    await this.collections[this.statesCollection].replaceOne({ deviceId }, stateToSave);
     return stateToSave;
   }
 }

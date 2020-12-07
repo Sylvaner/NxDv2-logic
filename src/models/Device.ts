@@ -1,11 +1,18 @@
 import { MqttAccessDesc } from '../interfaces/MqttAccessDesc';
 import DeviceState from './DeviceState';
 
+export enum DeviceTypes {
+  Light = 'light',
+  Sensor = 'sensor',
+  Other = 'other'
+}
+
 export interface DeviceData {
-  _id?: string
-  id: string
-  name: string
-  capabilities: Capabilities;
+  _id?: string,
+  id: string,
+  name: string,
+  capabilities: Capabilities,
+  type: DeviceTypes
 }
 
 export interface CapabilityAccessor {
@@ -22,11 +29,12 @@ export class Device {
   public state: DeviceState;
   public deviceType: string = '';
 
-  constructor(id: string, name: string, deviceType: string) {
+  constructor(id: string, name: string, deviceType: DeviceTypes) {
     this.data = {
       id,
       name,
-      capabilities: {}
+      capabilities: {},
+      type: deviceType
     };
     this.state = { deviceId: id, date: Date.now() };
     this.deviceType = deviceType;

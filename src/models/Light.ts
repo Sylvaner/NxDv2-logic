@@ -1,4 +1,4 @@
-import { Device } from './Device';
+import { Device, DeviceTypes } from './Device';
 import DeviceState from './DeviceState';
 
 interface LightState extends DeviceState {
@@ -11,7 +11,7 @@ export class Light extends Device {
   public state: LightState;
 
   constructor(id: string, name: string) {
-    super(id, name, 'light');
+    super(id, name, DeviceTypes.Light);
     this.state = { deviceId: id, date: Date.now() };
   }
 };
