@@ -17,19 +17,25 @@ export class StoreService extends DbService {
     return StoreService.instance!;
   }
 
-  public async save(deviceToSave: DeviceData): Promise<DeviceData> {
+  public async save(deviceData: DeviceData): Promise<DeviceData> {
     // Déplacer à la connexion
     if (this.collections[DEVICES_COLLECTION] === undefined) {
       this.collections[DEVICES_COLLECTION] = this.database!.collection(DEVICES_COLLECTION);
     }
-    if (deviceToSave !== null) {
-      if (deviceToSave._id === undefined) {
-        await this.collections[DEVICES_COLLECTION].insertOne(deviceToSave);
+    if (deviceData !== null) {
+      if (deviceData._id === undefined) {
+        await this.collections[DEVICES_COLLECTION].insertOne(deviceData);
       } else {
-        await this.collections[DEVICES_COLLECTION].replaceOne({ _id: deviceToSave._id }, deviceToSave);
+        await this.collections[DEVICES_COLLECTION].findOneAndUpdate({ _id: deviceData._id }, {
+          $set: {
+            id: deviceData.id,
+            name: deviceData.name,
+            capabilities: deviceData.capabilities
+          }
+        });
       }
     }
-    return deviceToSave;
+    return deviceData;
   }
 
   public getDevice(deviceId: string): Promise<DeviceData> {
