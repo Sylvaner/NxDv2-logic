@@ -18,10 +18,6 @@ export class StoreService extends DbService {
   }
 
   public async save(deviceData: DeviceData): Promise<DeviceData> {
-    // Déplacer à la connexion
-    if (this.collections[DEVICES_COLLECTION] === undefined) {
-      this.collections[DEVICES_COLLECTION] = this.database!.collection(DEVICES_COLLECTION);
-    }
     if (deviceData !== null) {
       if (deviceData._id === undefined) {
         await this.collections[DEVICES_COLLECTION].insertOne(deviceData);

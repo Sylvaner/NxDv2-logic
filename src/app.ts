@@ -39,7 +39,7 @@ function mqttMessageParser(topic: string, message: Buffer): void {
 
 /**
  * Load all enabled plugins
- * 
+ *
  * @returns List of plugin instances
  */
 function initPlugins(): Map<string, Plugin> {
@@ -81,11 +81,17 @@ const stateCredentials = {
   password: process.env.DB_PASSWORD!
 }
 
+const storeBaseCollections = [
+  'devices',
+  'zones'
+]
+
 // Entry point
 const mqttConnector = new MqttService(mqttConfig);
 const messageParsers = new Map<string, Plugin>();
 
 const storeService = StoreService.getInstance() as StoreService;
+storeService.baseCollections = storeBaseCollections;
 const stateService = StateService.getInstance() as StateService;
 storeService.connect(storeCredentials).then(() => {
   stateService.connect(stateCredentials).then(() => {
