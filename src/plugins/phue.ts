@@ -70,16 +70,16 @@ export class PHue implements Plugin {
               // First time, create a new device
               const dataTopic = `phue/${extractedData[1]}/${deviceData.id}`;
               light.addCapabilities('reachable', {
-                get: { topic: dataTopic, path: 'state.reachable' },
-                set: { topic: dataTopic + '/set', path: 'reachable' }
+                get: { topic: dataTopic, path: 'state.reachable', type: 'boolean', format: 'json' },
+                set: { topic: dataTopic + '/set', path: 'reachable', type: 'boolean', format: 'json' }
               });
               light.addCapabilities('state', {
-                get: { topic: dataTopic, path: 'state.on' },
-                set: { topic: dataTopic + '/set', path: 'on' }
+                get: { topic: dataTopic, path: 'state.on', type: 'boolean', format: 'json' },
+                set: { topic: dataTopic + '/set', path: 'on', type: 'boolean', format: 'json' }
               });
               light.addCapabilities('brightness', {
-                get: { topic: dataTopic, path: 'bri' },
-                set: { topic: dataTopic + '/set', path: 'bri' }
+                get: { topic: dataTopic, path: 'bri', type: 'number', format: 'json' },
+                set: { topic: dataTopic + '/set', path: 'bri', type: 'number', format: 'json' }
               });
               light.data = await StoreService.getInstance().save(light.data);
             } else {
@@ -111,7 +111,7 @@ export class PHue implements Plugin {
               const dataTopic = `phue/${extractedData[1]}/${deviceData.id}`;
               if (deviceData.state.hasOwnProperty('buttonevent')) {
                 sensor.addCapabilities('button', {
-                  get: { topic: dataTopic, path: 'state.buttonevent' }
+                  get: { topic: dataTopic, path: 'state.buttonevent', type: 'number', format: 'json' }
                 });
               }
               sensor.data = await StoreService.getInstance().save(sensor.data);

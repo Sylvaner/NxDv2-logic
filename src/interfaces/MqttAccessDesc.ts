@@ -4,4 +4,5 @@ export class MqttAccessDesc {
   topic: string = '';
   path: string = '';
   format?: MqttFormat = 'raw';
+  type: string = '';
 }
