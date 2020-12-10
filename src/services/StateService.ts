@@ -1,10 +1,10 @@
 import DeviceState from '../models/DeviceState';
 import { DbService } from './DbService';
 
+const STATES_COLLECTION = 'states';
 
 export class StateService extends DbService {
   private static instance?: StateService;
-  private statesCollection: string = 'states';
 
   private constructor() {
     super();
@@ -18,10 +18,7 @@ export class StateService extends DbService {
   }
 
   public async save(deviceId: string, stateToSave: DeviceState): Promise<DeviceState> {
-    if (this.collections[this.statesCollection] === undefined) {
-      this.collections[this.statesCollection] = this.database!.collection(this.statesCollection);
-    }
-    await this.collections[this.statesCollection].replaceOne({ deviceId }, stateToSave);
+    await this.collections[STATES_COLLECTION].replaceOne({ deviceId }, stateToSave, { upsert: true });
     return stateToSave;
   }
 }

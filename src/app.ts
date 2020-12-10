@@ -72,19 +72,23 @@ const storeCredentials = {
   database: process.env.DB_DATABASE!,
   user: process.env.DB_USER!,
   password: process.env.DB_PASSWORD!
-}
+};
 
 const stateCredentials = {
   host: process.env.DB_HOST!,
   database: process.env.DB_STATE_DATABASE!,
   user: process.env.DB_USER!,
   password: process.env.DB_PASSWORD!
-}
+};
 
 const storeBaseCollections = [
   'devices',
   'zones'
-]
+];
+
+const stateBaseCollections = [
+  'states'
+];
 
 // Entry point
 const mqttConnector = new MqttService(mqttConfig);
@@ -93,6 +97,7 @@ const messageParsers = new Map<string, Plugin>();
 const storeService = StoreService.getInstance() as StoreService;
 storeService.baseCollections = storeBaseCollections;
 const stateService = StateService.getInstance() as StateService;
+stateService.baseCollections = stateBaseCollections;
 storeService.connect(storeCredentials).then(() => {
   stateService.connect(stateCredentials).then(() => {
     const translators = initPlugins();
