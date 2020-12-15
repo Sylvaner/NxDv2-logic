@@ -17,7 +17,7 @@ export class StateService extends DbService {
     return StateService.instance!;
   }
 
-  public async save(deviceId: string, stateToSave: DeviceState): Promise<DeviceState> {
+  public async save<T extends DeviceState>(deviceId: string, stateToSave: T): Promise<T> {
     await this.collections[STATES_COLLECTION].replaceOne({ deviceId }, stateToSave, { upsert: true });
     return stateToSave;
   }

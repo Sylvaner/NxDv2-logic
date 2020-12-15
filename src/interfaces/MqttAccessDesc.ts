@@ -5,4 +5,5 @@ export class MqttAccessDesc {
   path: string = '';
   format?: MqttFormat = 'raw';
   type: string = '';
+  unit?: string = '';
 }

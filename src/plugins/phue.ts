@@ -2,15 +2,14 @@
  * Plugin pour la gestion des objets Philips Hue (version phue)
  */
 import { Plugin } from './plugin';
-import { Light } from '../models/Light';
+import { Device, DeviceTypes } from '../models/Device';
 import { StoreService } from '../services/StoreService';
 import { StateService } from '../services/StateService';
-import { Sensor } from '../models/Sensor';
 
 export class PHue implements Plugin {
   cache = {
-    lights: new Map<string, Light>(),
-    sensors: new Map<string, Sensor>()
+    lights: new Map<string, Device>(),
+    sensors: new Map<string, Device>()
   }
 
   /**
@@ -56,15 +55,15 @@ export class PHue implements Plugin {
       switch (extractedData[1]) {
         case 'lights':
         case 'groups':
-          let light: Light;
+          let light: Device;
           // Test if device is in cache
           if (this.cache.lights.has(deviceId)) {
             // Device from cache
-            light = this.cache.lights.get(deviceId) as Light;
+            light = this.cache.lights.get(deviceId)!;
           }
           else {
             // Try to load from database
-            light = new Light(deviceId, deviceData.name);
+            light = new Device(deviceId, deviceData.name, DeviceTypes.Light);
             const lightData = await StoreService.getInstance().getDevice(deviceId);
             if (lightData === null) {
               // First time, create a new device
@@ -96,15 +95,15 @@ export class PHue implements Plugin {
           }
           break;
         case 'sensors':
-          let sensor: Sensor;
+          let sensor: Device;
           // Test if device is in cache
           if (this.cache.sensors.has(deviceId)) {
             // Device from cache
-            sensor = this.cache.sensors.get(deviceId) as Light;
+            sensor = this.cache.sensors.get(deviceId)!;
           }
           else {
             // Try to load from database
-            sensor = new Sensor(deviceId, deviceData.name);
+            sensor = new Device(deviceId, deviceData.name, DeviceTypes.Sensor);
             const sensorData = await StoreService.getInstance().getDevice(deviceId);
             if (sensorData === null) {
               // First time, create a new device

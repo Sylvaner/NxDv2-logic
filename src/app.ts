@@ -1,5 +1,6 @@
 import { Hue } from './plugins/hue';
 import { PHue } from './plugins/phue';
+import { ZWaveJs } from './plugins/zwavejs2mqtt';
 import { Plugin } from './plugins/plugin';
 import { StoreService } from './services/StoreService';
 import { StateService } from './services/StateService';
@@ -53,10 +54,11 @@ function initPlugins(): Map<string, Plugin> {
 }
 
 // List of plugins
-const enabledPlugins = ['Hue', 'PHue'];
+const enabledPlugins = ['Hue', 'PHue', 'ZWaveJs'];
 const availablePlugins = new Map<string, any>();
 availablePlugins.set('Hue', Hue);
 availablePlugins.set('PHue', PHue);
+availablePlugins.set('ZWaveJs', ZWaveJs);
 
 // Read config
 dotenv.config({ path: `${__dirname}/../.env` });

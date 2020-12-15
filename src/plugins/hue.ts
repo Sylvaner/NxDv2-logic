@@ -2,13 +2,13 @@
  * Plugin pour la gestion des objets Philips Hue
  */
 import { Plugin } from './plugin';
-import { Light } from '../models/Light';
 import { StoreService } from '../services/StoreService';
 import { StateService } from '../services/StateService';
+import { Device, DeviceTypes } from '../models/Device';
 
 export class Hue implements Plugin {
   cache = {
-    lights: new Map<string, Light>()
+    lights: new Map<string, Device>()
   }
 
   /**
@@ -52,16 +52,16 @@ export class Hue implements Plugin {
     if (regExpResult !== null) {
       const lightName = regExpResult[1];
       const lightData = JSON.parse(message.toString());
-      let light: Light;
+      let light: Device;
       const lightId = 'hue-' + lightName;
       // Test if device is in cache
       if (this.cache.lights.has(lightId)) {
         // Device from cache
-        light = this.cache.lights.get(lightId) as Light;
+        light = this.cache.lights.get(lightId)!;
       }
       else {
         // Try to load from database
-        light = new Light(lightId, lightName);
+        light = new Device(lightId, lightName, DeviceTypes.Light);
         try {
           light.data = await StoreService.getInstance().getDevice(lightId);
         }

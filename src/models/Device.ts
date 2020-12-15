@@ -4,7 +4,9 @@ import DeviceState from './DeviceState';
 export enum DeviceTypes {
   Light = 'light',
   Sensor = 'sensor',
-  Other = 'other'
+  Switch = 'switch',
+  Other = 'other',
+  Unknown = 'unknown'
 }
 
 export interface DeviceData {
@@ -40,6 +42,12 @@ export class Device {
     this.deviceType = deviceType;
   }
 
+  /**
+   * Ajoute une capacité à un équipement
+   * TODO: A renommer
+   * @param name 
+   * @param capability 
+   */
   public addCapabilities(name: string, capability: CapabilityAccessor) {
     this.data.capabilities[name] = capability;
   }
