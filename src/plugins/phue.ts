@@ -77,7 +77,7 @@ export class PHue implements Plugin {
                 set: { topic: dataTopic + '/set', path: 'on', type: 'boolean', format: 'json' }
               });
               light.addCapabilities('brightness', {
-                get: { topic: dataTopic, path: 'bri', type: 'number', format: 'json' },
+                get: { topic: dataTopic, path: 'state.bri', type: 'number', format: 'json' },
                 set: { topic: dataTopic + '/set', path: 'bri', type: 'number', format: 'json' }
               });
               light.data = await StoreService.getInstance().save(light.data);

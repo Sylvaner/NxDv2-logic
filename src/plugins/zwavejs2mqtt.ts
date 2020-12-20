@@ -253,7 +253,6 @@ export class ZWaveJs implements Plugin {
    */
   getCapability(objectType: string, capabilityData: any): ExtractedCapability | null {
     const dataFromName = this.extractDataFromName(objectType, capabilityData.name, capabilityData.device.name);
-    //console.log(dataFromName);
     if (dataFromName !== null) {
       const capability: ExtractedCapability | null = { name: '', accessor: {} };
       capability.name = dataFromName.name;
