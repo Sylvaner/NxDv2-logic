@@ -6,4 +6,4 @@ export interface Plugin {
   getTopicPrefix(): string;
   getSubscribeTopic(): string;
   messageHandler(topic: string, message: Buffer): void;
-};
+}

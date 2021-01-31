@@ -9,7 +9,7 @@ export class DbService {
   protected collections: CollectionIndex = {};
   public baseCollections: string[] = [];
 
-  public connect(credentials: any): Promise<void> {
+  public connect(credentials: any, targetCollections: string[]): Promise<void> {
     return new Promise(async (resolve) => {
       const uri = `mongodb://${credentials.user}:${credentials.password}@${credentials.host}/${credentials.database}?w=majority`;
       this.client = new MongoClient(uri, {
@@ -23,9 +23,9 @@ export class DbService {
         for (const collection of collections) {
           this.collections[collection.collectionName] = collection;
         }
-        for (const baseCollection of this.baseCollections) {
-          if (this.collections[baseCollection] === undefined) {
-            this.collections[baseCollection] = await this.database.createCollection(baseCollection);
+        for (const targetCollection of targetCollections) {
+          if (this.collections[targetCollection] === undefined) {
+            this.collections[targetCollection] = await this.database.createCollection(targetCollection);
           }
         }
         resolve();

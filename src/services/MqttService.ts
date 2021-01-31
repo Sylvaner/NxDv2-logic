@@ -26,40 +26,42 @@ export class MqttService {
    * Connect to MQTT server and initialise events listeners
    *
    * @param connectionCallback Function called when connection established
+   *
+   * @returns Promise on connection established
    */
-  public connect(connectionCallback?: () => void): void {
-    this.connected = true;
-    let protocol = 'mqtt';
-    if (this.config.useTls) {
-      protocol = protocol + 's';
-    }
-    this.mqttClient = mqtt.connect(`${protocol}://${this.config.server}`, {
-      username: this.config.login,
-      password: this.config.password,
-      port: this.config.port
-    });
-    this.mqttClient.on('error', (e) => {
-      if (e.message.indexOf('Connection refused') >= 0) {
-        console.error('MQTT: connection failed');
-        exit(1);
-      } else if (e.message.indexOf('connect ECONNREFUSED') >= 0) {
-        console.error('MQTT: Server unreachable');
-        exit(1);
-      } else {
-        console.error(e);
-      }
-    });
-    this.mqttClient.on('connect', () => {
-      console.log('MQTT: Connected');
+  public connect(connectionCallback?: () => void): Promise<void> {
+    return new Promise((resolve) => {
       this.connected = true;
-      if (connectionCallback) {
-        connectionCallback();
+      let protocol = 'mqtt';
+      if (this.config.useTls) {
+        protocol = protocol + 's';
       }
-    });
-    this.mqttClient.on('message', (topic: string, message: Buffer) => {
-      if (this.messageParser !== undefined) {
-        this.messageParser(topic, message);
-      }
+      this.mqttClient = mqtt.connect(`${protocol}://${this.config.server}`, {
+        username: this.config.login,
+        password: this.config.password,
+        port: this.config.port
+      });
+      this.mqttClient.on('error', (e) => {
+        if (e.message.indexOf('Connection refused') >= 0) {
+          console.error('MQTT: connection failed');
+          exit(1);
+        } else if (e.message.indexOf('connect ECONNREFUSED') >= 0) {
+          console.error('MQTT: Server unreachable');
+          exit(1);
+        } else {
+          console.error(e);
+        }
+      });
+      this.mqttClient.on('connect', () => {
+        console.log('MQTT: Connected');
+        this.connected = true;
+        resolve();
+      });
+      this.mqttClient.on('message', (topic: string, message: Buffer) => {
+        if (this.messageParser !== undefined) {
+          this.messageParser(topic, message);
+        }
+      });
     });
   }
 
@@ -74,24 +76,13 @@ export class MqttService {
   }
 
   /**
-   * Subscribe to topic
+   * Subscribe to topic(s)
    *
-   * @param topic Source topic
+   * @param topic Topic or list of topics in array to subscribe
    * @param messageParser Message parser
    */
-  public subscribe(topic: string, messageParser: (topic: string, data: Buffer) => void): void {
+  public subscribe(topic: string | string[], messageParser: (topic: string, data: Buffer) => void): void {
     this.mqttClient.subscribe(topic);
-    this.messageParser = messageParser;
-  }
-
-  /**
-   * Subscribe to multiple topics
-   *
-   * @param topics List of topics
-   * @param messageParser Message parser
-   */
-  public multipleSubscribes(topics: string[], messageParser: (topic: string, data: Buffer) => void): void {
-    this.mqttClient.subscribe(topics);
     this.messageParser = messageParser;
   }
 }

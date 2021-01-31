@@ -4,4 +4,4 @@ export class MqttConfig {
   password: string = '';
   port?: number = 1883;
   useTls?: boolean = false;
-};
+}

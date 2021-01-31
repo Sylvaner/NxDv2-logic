@@ -15,7 +15,6 @@ import { Plugin } from './plugin';
 import { CapabilityAccessor, Device, DeviceTypes } from '../models/Device';
 import { StoreService } from '../services/StoreService';
 import { StateService } from '../services/StateService';
-//import { StateService } from '../services/StateService';
 
 interface TopicCache {
   deviceIdentifier: string,
@@ -51,7 +50,7 @@ export class ZWaveJs implements Plugin {
    */
   constructor() {
     setInterval(async () => {
-      this.saveCacheInDb();
+      await this.saveCacheInDb();
     }, 10000);
   }
 
@@ -110,9 +109,8 @@ export class ZWaveJs implements Plugin {
 
   /**
    * Nettoie et ajoute certains paramètres manquant avant la sauvegarde
-   * @param objectType 
-   * @param device 
-   * @param deviceData 
+   *
+   * @param deviceIdentifier Identifiant du périphérique
    */
   cleanBeforeSave(deviceIdentifier: string): void {
     const device = this.cache.devices.get(deviceIdentifier)!;
@@ -134,9 +132,9 @@ export class ZWaveJs implements Plugin {
   /**
    * Vérifie si un type peut être attribué puis sauvegarde le device dans le cache.
    * 
-   * @param deviceIdentifier Identifiant du device
    * @param objectType Type de l'objet défini par le topic
-   * @param device Information du device
+   * @param device Information du périphérique
+   * @param deviceData Données du périphérique
    */
   checkTypeAndAddToCache(objectType: string, device: Device, deviceData: any): void {
     if (device.deviceType === DeviceTypes.Unknown) {
@@ -161,6 +159,7 @@ export class ZWaveJs implements Plugin {
 
   /**
    * Extrait les données à partir du nom du topic
+   *
    * @param objectType Type de l'objet
    * @param capabilityName Nom de la capacité
    * @param deviceName Nom du device pour Zwavejs2mqtt
