@@ -45,10 +45,13 @@ function mqttMessageParser(topic: string, message: Buffer): void {
 function initPlugins(): Map<string, Plugin> {
   const plugins = new Map<string, Plugin>();
   enabledPlugins.forEach((pluginName) => {
-    import('./plugins/' + pluginName).then((importedModule) => {
+    import(__dirname + '/plugins/' + pluginName).then((importedModule) => {
       const pluginInstance: Plugin = new importedModule[pluginName]();
       console.log('Loading plugin ' + pluginInstance.getName());
       plugins.set(pluginInstance.getName(), pluginInstance);
+    }).catch((err) => {
+      console.error('Error on loading plugin ' + pluginName);
+      console.error(err);
     });
   });
   return plugins;
