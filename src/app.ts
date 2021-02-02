@@ -105,6 +105,8 @@ function start(): void {
 // List of plugins
 const enabledPlugins = ['Hue', 'PHue', 'ZWaveJs'];
 
+readConfigFile();
+
 const mqttConfig: MqttConfig = {
   login: process.env.MQTT_USER!,
   password: process.env.MQTT_PASSWORD!,
@@ -115,5 +117,4 @@ const mqttConfig: MqttConfig = {
 const mqttConnector = new MqttService(mqttConfig);
 const messageParsers = new Map<string, Plugin>();
 
-readConfigFile();
 start();
