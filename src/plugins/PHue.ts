@@ -68,15 +68,15 @@ export class PHue implements Plugin {
             if (lightData === null) {
               // First time, create a new device
               const dataTopic = `phue/${extractedData[1]}/${deviceData.id}`;
-              light.addCapabilities('reachable', {
+              light.setCapability('reachable', {
                 get: { topic: dataTopic, path: 'state.reachable', type: 'boolean', format: 'json' },
                 set: { topic: dataTopic + '/set', path: 'reachable', type: 'boolean', format: 'json' }
               });
-              light.addCapabilities('state', {
+              light.setCapability('state', {
                 get: { topic: dataTopic, path: 'state.on', type: 'boolean', format: 'json' },
                 set: { topic: dataTopic + '/set', path: 'on', type: 'boolean', format: 'json' }
               });
-              light.addCapabilities('brightness', {
+              light.setCapability('brightness', {
                 get: { topic: dataTopic, path: 'state.bri', type: 'number', format: 'json' },
                 set: { topic: dataTopic + '/set', path: 'bri', type: 'number', format: 'json' }
               });
@@ -109,7 +109,7 @@ export class PHue implements Plugin {
               // First time, create a new device
               const dataTopic = `phue/${extractedData[1]}/${deviceData.id}`;
               if (deviceData.state.hasOwnProperty('buttonevent')) {
-                sensor.addCapabilities('button', {
+                sensor.setCapability('button', {
                   get: { topic: dataTopic, path: 'state.buttonevent', type: 'number', format: 'json' }
                 });
               }

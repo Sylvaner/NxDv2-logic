@@ -43,12 +43,19 @@ export class Device {
   }
 
   /**
-   * Ajoute une capacité à un équipement
-   * TODO: A renommer
-   * @param name 
-   * @param capability 
+   * Set device name
+   * @param name New name
    */
-  public addCapabilities(name: string, capability: CapabilityAccessor) {
+  public setName(name: string) {
+    this.data.name = name;
+  }
+
+  /**
+   * Définir une capacité à un équipement
+   * @param name Nom de la capacité
+   * @param capability Données de la capacité
+   */
+  public setCapability(name: string, capability: CapabilityAccessor) {
     this.data.capabilities[name] = capability;
   }
 };

@@ -103,7 +103,7 @@ function start(): void {
 }
 
 // List of plugins
-const enabledPlugins = ['Hue', 'PHue', 'ZWaveJs'];
+const enabledPlugins = ['Homie'];
 
 readConfigFile();
 

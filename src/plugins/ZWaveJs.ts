@@ -117,7 +117,7 @@ export class ZWaveJs implements Plugin {
     // Ajout du reachable
     if (!('status' in device.data.capabilities)) {
       const mqttNode = device.data.id.replace('zwavejs-', '');
-      device.addCapabilities('reachable', {
+      device.setCapability('reachable', {
         get: {
           topic: 'zwavejs/' + mqttNode + '/status',
           path: 'value',
@@ -131,7 +131,7 @@ export class ZWaveJs implements Plugin {
 
   /**
    * Vérifie si un type peut être attribué puis sauvegarde le device dans le cache.
-   * 
+   *
    * @param objectType Type de l'objet défini par le topic
    * @param device Information du périphérique
    * @param deviceData Données du périphérique
@@ -166,7 +166,7 @@ export class ZWaveJs implements Plugin {
    */
   extractDataFromName(objectType: string, capabilityName: string, deviceName: string): ExtractedData | null {
     // Transformation du nom pour rechercher sa fonction
-    let baseName = capabilityName.replace(deviceName + '_', '').toLowerCase();
+    const baseName = capabilityName.replace(deviceName + '_', '').toLowerCase();
     // Les lumières avec une luminosité
     if (objectType === 'light' && baseName.indexOf('dimmer') !== -1) {
       return {
@@ -319,7 +319,7 @@ export class ZWaveJs implements Plugin {
         const topicCache: TopicCache = { deviceIdentifier, capability: capabilityToAdd.name };
         this.topicsCache.set(capabilityData.state_topic, topicCache);
       }
-      device.addCapabilities(capabilityToAdd.name, capabilityToAdd.accessor);
+      device.setCapability(capabilityToAdd.name, capabilityToAdd.accessor);
       this.checkTypeAndAddToCache(objectType, device, capabilityData.device);
     }
   }

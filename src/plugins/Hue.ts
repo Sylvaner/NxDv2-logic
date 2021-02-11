@@ -68,9 +68,9 @@ export class Hue implements Plugin {
         catch (_) {
           // First time, create a new device
           const dataTopic = 'hue/status/lights/' + lightName;
-          light.addCapabilities('reachable', { get: { topic: dataTopic, path: 'hue_state.reachable', type: 'boolean', format: 'json' } });
-          light.addCapabilities('state', { get: { topic: dataTopic, path: 'hue_state.on', type: 'boolean', format: 'json' } });
-          light.addCapabilities('brightness', { get: { topic: dataTopic, path: 'hue_state.bri', type: 'number', format: 'json' } });
+          light.setCapability('reachable', { get: { topic: dataTopic, path: 'hue_state.reachable', type: 'boolean', format: 'json' } });
+          light.setCapability('state', { get: { topic: dataTopic, path: 'hue_state.on', type: 'boolean', format: 'json' } });
+          light.setCapability('brightness', { get: { topic: dataTopic, path: 'hue_state.bri', type: 'number', format: 'json' } });
           light.data = await StoreService.getInstance().save(light.data);
         }
       }
