@@ -60,7 +60,10 @@ export class Homie implements Plugin {
           // Test si le device a déjà un champ _id pour éviter un doublon en base de données
           if (!('_id' in this.cache.get(deviceIdentifier)!.data)) {
             // Essai de le retrouver depuis la base de données si celui-ci existe
-            this.cache.get(deviceIdentifier)!.data._id = (await storeService.getDevice(deviceIdentifier))._id
+            const storedDevice = await storeService.getDevice(deviceIdentifier);
+            this.cache.get(deviceIdentifier)!.data._id = storedDevice._id
+            this.cache.get(deviceIdentifier)!.data.type = storedDevice.type
+            this.cache.get(deviceIdentifier)!.data.config = storedDevice.config
           }
         }
         catch (_) { }
@@ -72,6 +75,7 @@ export class Homie implements Plugin {
       this.lastCacheSave = Date.now();
     }
   }
+
 
   /**
    * Transform raw message from string to the best type
@@ -108,12 +112,7 @@ export class Homie implements Plugin {
       if (this.cache.has(deviceId)) {
         device = this.cache.get(deviceId)!;
       } else {
-        // Get from db
         device = new Device(deviceId, '', DeviceTypes.Unknown);
-        const storedData = await StoreService.getInstance().getDevice(deviceId)
-        if (storedData !== null) {
-          device.data = storedData;
-        }
       }
       // Données du device
       if (dataFromTopic[1] === '$name') {
