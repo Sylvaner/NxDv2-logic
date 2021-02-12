@@ -108,7 +108,12 @@ export class Homie implements Plugin {
       if (this.cache.has(deviceId)) {
         device = this.cache.get(deviceId)!;
       } else {
+        // Get from db
         device = new Device(deviceId, '', DeviceTypes.Unknown);
+        const storedData = await StoreService.getInstance().getDevice(deviceId)
+        if (storedData !== null) {
+          device.data = storedData;
+        }
       }
       // Données du device
       if (dataFromTopic[1] === '$name') {

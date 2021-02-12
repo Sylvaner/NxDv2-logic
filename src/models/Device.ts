@@ -14,7 +14,8 @@ export interface DeviceData {
   id: string,
   name: string,
   capabilities: Capabilities,
-  type: DeviceTypes
+  type: DeviceTypes,
+  config: object
 }
 
 export interface CapabilityAccessor {
@@ -36,7 +37,8 @@ export class Device {
       id,
       name,
       capabilities: {},
-      type: deviceType
+      type: deviceType,
+      config: {}
     };
     this.state = { deviceId: id, date: Date.now() };
     this.deviceType = deviceType;

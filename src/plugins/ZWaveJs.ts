@@ -11,6 +11,14 @@
  *         -> Retained Discovery
  *         -> Disovery prefix : zwavejs/_DISCOVERY
  */
+/**
+ *
+ *
+ * TODO gestion du state par la config
+ *
+ *
+ *
+ */
 import { Plugin } from './plugin';
 import { CapabilityAccessor, Device, DeviceTypes } from '../models/Device';
 import { StoreService } from '../services/StoreService';
