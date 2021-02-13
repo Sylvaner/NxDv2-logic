@@ -5,7 +5,7 @@
  * MQTT -> Prefix : zwavejs
  * 
  * Gateway -> Type : Named topics
- *         -> Payload type : JSON Time-Value
+ *         -> Payload category  : JSON Time-Value
  *         -> Ignore location
  *         -> HASS Disocvery
  *         -> Retained Discovery
@@ -20,7 +20,7 @@
  *
  */
 import { Plugin } from './plugin';
-import { CapabilityAccessor, Device, DeviceTypes } from '../models/Device';
+import { CapabilityAccessor, Device, DeviceCagories } from '../models/Device';
 import { StoreService } from '../services/StoreService';
 import { StateService } from '../services/StateService';
 
@@ -140,23 +140,23 @@ export class ZWaveJs implements Plugin {
   /**
    * Vérifie si un type peut être attribué puis sauvegarde le device dans le cache.
    *
-   * @param objectType Type de l'objet défini par le topic
+   * @param objectCagory Cagory de l'objet défini par le topic
    * @param device Information du périphérique
    * @param deviceData Données du périphérique
    */
-  checkTypeAndAddToCache(objectType: string, device: Device, deviceData: any): void {
-    if (device.deviceType === DeviceTypes.Unknown) {
+  checkCagoryAndAddToCache(objectCagory: string, device: Device, deviceData: any): void {
+    if (device.deviceCagory === DeviceCagories.Unknown) {
       // Les lumières sont prioritaires
-      if (objectType === 'light') {
-        device.deviceType = DeviceTypes.Light;
-        device.data.type = DeviceTypes.Light;
+      if (objectCagory === 'light') {
+        device.deviceCagory = DeviceCagories.Light;
+        device.data.category = DeviceCagories.Light;
         // Détection d'une prise
-      } else if (objectType === 'switch') {
-        device.deviceType = DeviceTypes.Switch;
-        device.data.type = DeviceTypes.Switch;
+      } else if (objectCagory === 'switch') {
+        device.deviceCagory = DeviceCagories.Switch;
+        device.data.category = DeviceCagories.Switch;
       } else if (deviceData.device_class === 'door') {
-        device.deviceType = DeviceTypes.Sensor;
-        device.data.type = DeviceTypes.Sensor;
+        device.deviceCagory = DeviceCagories.Sensor;
+        device.data.category = DeviceCagories.Sensor;
       }
     }
     // Indique que le cache doit être sauvegardé
@@ -168,20 +168,20 @@ export class ZWaveJs implements Plugin {
   /**
    * Extrait les données à partir du nom du topic
    *
-   * @param objectType Type de l'objet
+   * @param objectCagory Cagory de l'objet
    * @param capabilityName Nom de la capacité
    * @param deviceName Nom du device pour Zwavejs2mqtt
    */
-  extractDataFromName(objectType: string, capabilityName: string, deviceName: string): ExtractedData | null {
+  extractDataFromName(objectCagory: string, capabilityName: string, deviceName: string): ExtractedData | null {
     // Transformation du nom pour rechercher sa fonction
     const baseName = capabilityName.replace(deviceName + '_', '').toLowerCase();
     // Les lumières avec une luminosité
-    if (objectType === 'light' && baseName.indexOf('dimmer') !== -1) {
+    if (objectCagory === 'light' && baseName.indexOf('dimmer') !== -1) {
       return {
         name: 'brightness',
         type: 'number'
       }
-    } else if (objectType === 'switch' && baseName.indexOf('switch') !== -1) {
+    } else if (objectCagory === 'switch' && baseName.indexOf('switch') !== -1) {
       // Les switchs sont ont des états on/off
       const multipleSwitch = /(.*)_(\d+)/.exec(baseName);
       if (multipleSwitch !== null) {
@@ -195,7 +195,7 @@ export class ZWaveJs implements Plugin {
           type: 'boolean'
         };
       }
-    } else if (objectType === 'sensor') {
+    } else if (objectCagory === 'sensor') {
       // Les sensors sont toutes les données pouvant êtres lues
       // Electrique
       const electricSensor = /^electric(\d*)_(\w+)_meter$/.exec(baseName);
@@ -255,11 +255,11 @@ export class ZWaveJs implements Plugin {
 
   /**
    * Obtenir la capacité à partir des données
-   * @param objectType Type de l'objet
+   * @param objectCagory Cagory de l'objet
    * @param capabilityData Données de la capacité
    */
-  getCapability(objectType: string, capabilityData: any): ExtractedCapability | null {
-    const dataFromName = this.extractDataFromName(objectType, capabilityData.name, capabilityData.device.name);
+  getCapability(objectCagory: string, capabilityData: any): ExtractedCapability | null {
+    const dataFromName = this.extractDataFromName(objectCagory, capabilityData.name, capabilityData.device.name);
     if (dataFromName !== null) {
       const capability: ExtractedCapability | null = { name: '', accessor: {} };
       capability.name = dataFromName.name;
@@ -291,10 +291,10 @@ export class ZWaveJs implements Plugin {
 
   /**
    * Lit les informations depuis les topics du discovery
-   * @param objectType Type de l'objet depuis le topic
+   * @param objectCagory Cagory de l'objet depuis le topic
    * @param message Message MQTT contenant les données
    */
-  async readFromDiscovery(objectType: string, message: Buffer) {
+  async readFromDiscovery(objectCagory: string, message: Buffer) {
     const capabilityData = JSON.parse(message.toString());
     let deviceIdentifier = 'zwavejs-' + capabilityData.device.name;
     // Première recherche dans le cache, l'identifiant du topic peut intégrer la salle dans la configuration
@@ -316,9 +316,9 @@ export class ZWaveJs implements Plugin {
     if (this.cache.devices.has(deviceIdentifier)) {
       device = this.cache.devices.get(deviceIdentifier)!;
     } else {
-      device = new Device(deviceIdentifier, capabilityData.device.name, DeviceTypes.Unknown);
+      device = new Device(deviceIdentifier, capabilityData.device.name, DeviceCagories.Unknown);
     }
-    const capabilityToAdd = this.getCapability(objectType, capabilityData);
+    const capabilityToAdd = this.getCapability(objectCagory, capabilityData);
     if (capabilityToAdd !== null) {
       // Mise en cache du topic pour la lecture des états
       // Ce cache permet de retrouver directement le nom de la capacité
@@ -328,7 +328,7 @@ export class ZWaveJs implements Plugin {
         this.topicsCache.set(capabilityData.state_topic, topicCache);
       }
       device.setCapability(capabilityToAdd.name, capabilityToAdd.accessor);
-      this.checkTypeAndAddToCache(objectType, device, capabilityData.device);
+      this.checkCagoryAndAddToCache(objectCagory, device, capabilityData.device);
     }
   }
 

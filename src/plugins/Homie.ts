@@ -2,7 +2,7 @@
  * Plugin pour la gestion des objets Philips Hue (version phue)
  */
 import {Plugin} from './plugin';
-import {CapabilityAccessor, Device, DeviceTypes} from '../models/Device';
+import {CapabilityAccessor, Device, DeviceCagories} from '../models/Device';
 import {StoreService} from "../services/StoreService";
 import {StateService} from "../services/StateService";
 
@@ -56,21 +56,18 @@ export class Homie implements Plugin {
       const storeService = StoreService.getInstance();
       // Sauvegarde l'ensemble des devices
       for (const deviceIdentifier of this.cache.keys()) {
-        try {
-          // Test si le device a déjà un champ _id pour éviter un doublon en base de données
-          if (!('_id' in this.cache.get(deviceIdentifier)!.data)) {
-            // Essai de le retrouver depuis la base de données si celui-ci existe
-            const storedDevice = await storeService.getDevice(deviceIdentifier);
-            this.cache.get(deviceIdentifier)!.data._id = storedDevice._id
-            this.cache.get(deviceIdentifier)!.data.type = storedDevice.type
-            this.cache.get(deviceIdentifier)!.data.config = storedDevice.config
+        // Test si le device a déjà un champ _id pour éviter un doublon en base de données
+        if (!('_id' in this.cache.get(deviceIdentifier)!.data)) {
+          // Essai de le retrouver depuis la base de données si celui-ci existe
+          const storedDevice = await storeService.getDevice(deviceIdentifier);
+          if (storedDevice !== null) {
+            this.cache.get(deviceIdentifier)!.data._id = storedDevice._id;
+            this.cache.get(deviceIdentifier)!.data.category = storedDevice.category;
+            this.cache.get(deviceIdentifier)!.data.config = storedDevice.config;
           }
         }
-        catch (_) { }
-        finally {
-          // Sauvegarde
-          this.cache.get(deviceIdentifier)!.data = await StoreService.getInstance().save(this.cache.get(deviceIdentifier)!.data);
-        }
+        // Sauvegarde
+        this.cache.get(deviceIdentifier)!.data = await StoreService.getInstance().save(this.cache.get(deviceIdentifier)!.data);
       }
       this.lastCacheSave = Date.now();
     }
@@ -109,14 +106,16 @@ export class Homie implements Plugin {
       dataFromTopic.shift();
       const deviceId = dataFromTopic[0];
       let device: Device;
+      let cacheChange = false;
       if (this.cache.has(deviceId)) {
         device = this.cache.get(deviceId)!;
       } else {
-        device = new Device(deviceId, '', DeviceTypes.Unknown);
+        device = new Device(deviceId, '', DeviceCagories.Unknown);
       }
       // Données du device
       if (dataFromTopic[1] === '$name') {
         device.setName(message.toString());
+        cacheChange = true;
       // Status du device
       } else if (dataFromTopic[1] === '$reachable') {
         const capabilityName = 'reachable'
@@ -125,11 +124,13 @@ export class Homie implements Plugin {
           set: { topic, path: '', type: 'string', format: 'raw' }
         });
         device.state[capabilityName] = message.toString();
+        cacheChange = true;
       // Donnée d'état d'une capacité
       } else if (dataFromTopic.length === 3) {
         if (dataFromTopic[2][0] !== '$') {
           device.state[dataFromTopic[2]] = Homie.extratMessageData(message.toString());
           device.state = await StateService.getInstance().save(deviceId, device.state);
+          cacheChange = true;
         }
       // Données sur une capacité
       } else if (dataFromTopic.length === 4) {
@@ -142,12 +143,14 @@ export class Homie implements Plugin {
             set: {topic: dataTopic, path: '', type: 'string', format: 'raw'}
           };
           device.setCapability(capabilityName, capability);
+          cacheChange = true;
         }
         switch (dataFromTopic[3]) {
           case '$settable':
             const settable = Homie.extratMessageData(message.toString());
             if (!settable) {
               delete device.data.capabilities[capabilityName].set;
+              cacheChange = true;
             }
             break;
           case '$datatype':
@@ -155,13 +158,17 @@ export class Homie implements Plugin {
             if (device.data.capabilities[capabilityName].set !== undefined) {
               device.data.capabilities[capabilityName].set!.type = message.toString();
             }
+            cacheChange = true;
             break;
           default:
           case '$name':
             break;
         }
       }
-      this.cache.set(deviceId, device);
+      if (cacheChange) {
+        this.cache.set(deviceId, device);
+        this.lastCacheChange = Date.now();
+      }
     }
   }
 }

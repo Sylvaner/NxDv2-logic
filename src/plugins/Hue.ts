@@ -4,7 +4,7 @@
 import { Plugin } from './plugin';
 import { StoreService } from '../services/StoreService';
 import { StateService } from '../services/StateService';
-import { Device, DeviceTypes } from '../models/Device';
+import { Device, DeviceCagories } from '../models/Device';
 
 export class Hue implements Plugin {
   cache = {
@@ -61,7 +61,7 @@ export class Hue implements Plugin {
       }
       else {
         // Try to load from database
-        light = new Device(lightId, lightName, DeviceTypes.Light);
+        light = new Device(lightId, lightName, DeviceCagories.Light);
         try {
           light.data = await StoreService.getInstance().getDevice(lightId);
         }
