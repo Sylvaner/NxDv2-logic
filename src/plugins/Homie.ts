@@ -2,7 +2,7 @@
  * Plugin pour la gestion des objets Philips Hue (version phue)
  */
 import {Plugin} from './plugin';
-import {CapabilityAccessor, Device, DeviceCagories} from '../models/Device';
+import {CapabilityAccessor, Device, DeviceCategories} from '../models/Device';
 import {StoreService} from "../services/StoreService";
 import {StateService} from "../services/StateService";
 
@@ -110,7 +110,7 @@ export class Homie implements Plugin {
       if (this.cache.has(deviceId)) {
         device = this.cache.get(deviceId)!;
       } else {
-        device = new Device(deviceId, '', DeviceCagories.Unknown);
+        device = new Device(deviceId, '', DeviceCategories.Unknown);
       }
       // Données du device
       if (dataFromTopic[1] === '$name') {

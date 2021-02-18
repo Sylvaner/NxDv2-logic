@@ -2,7 +2,7 @@
  * Plugin pour la gestion des objets Philips Hue (version phue)
  */
 import { Plugin } from './plugin';
-import { Device, DeviceCagories } from '../models/Device';
+import { Device, DeviceCategories } from '../models/Device';
 import { StoreService } from '../services/StoreService';
 import { StateService } from '../services/StateService';
 
@@ -63,7 +63,7 @@ export class PHue implements Plugin {
           }
           else {
             // Try to load from database
-            light = new Device(deviceId, deviceData.name, DeviceCagories.Light);
+            light = new Device(deviceId, deviceData.name, DeviceCategories.Light);
             const lightData = await StoreService.getInstance().getDevice(deviceId);
             if (lightData === null) {
               // First time, create a new device
@@ -103,7 +103,7 @@ export class PHue implements Plugin {
           }
           else {
             // Try to load from database
-            sensor = new Device(deviceId, deviceData.name, DeviceCagories.Sensor);
+            sensor = new Device(deviceId, deviceData.name, DeviceCategories.Sensor);
             const sensorData = await StoreService.getInstance().getDevice(deviceId);
             if (sensorData === null) {
               // First time, create a new device

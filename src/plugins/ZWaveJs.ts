@@ -20,7 +20,7 @@
  *
  */
 import { Plugin } from './plugin';
-import { CapabilityAccessor, Device, DeviceCagories } from '../models/Device';
+import { CapabilityAccessor, Device, DeviceCategories } from '../models/Device';
 import { StoreService } from '../services/StoreService';
 import { StateService } from '../services/StateService';
 
@@ -140,23 +140,20 @@ export class ZWaveJs implements Plugin {
   /**
    * Vérifie si un type peut être attribué puis sauvegarde le device dans le cache.
    *
-   * @param objectCagory Cagory de l'objet défini par le topic
+   * @param objectCategory Category de l'objet défini par le topic
    * @param device Information du périphérique
    * @param deviceData Données du périphérique
    */
-  checkCagoryAndAddToCache(objectCagory: string, device: Device, deviceData: any): void {
-    if (device.deviceCagory === DeviceCagories.Unknown) {
+  checkCategoryAndAddToCache(objectCategory: string, device: Device, deviceData: any): void {
+    if (device.data.category === DeviceCategories.Unknown) {
       // Les lumières sont prioritaires
-      if (objectCagory === 'light') {
-        device.deviceCagory = DeviceCagories.Light;
-        device.data.category = DeviceCagories.Light;
+      if (objectCategory === 'light') {
+        device.data.category = DeviceCategories.Light;
         // Détection d'une prise
-      } else if (objectCagory === 'switch') {
-        device.deviceCagory = DeviceCagories.Switch;
-        device.data.category = DeviceCagories.Switch;
+      } else if (objectCategory === 'switch') {
+        device.data.category = DeviceCategories.Switch;
       } else if (deviceData.device_class === 'door') {
-        device.deviceCagory = DeviceCagories.Sensor;
-        device.data.category = DeviceCagories.Sensor;
+        device.data.category = DeviceCategories.Sensor;
       }
     }
     // Indique que le cache doit être sauvegardé
@@ -168,20 +165,20 @@ export class ZWaveJs implements Plugin {
   /**
    * Extrait les données à partir du nom du topic
    *
-   * @param objectCagory Cagory de l'objet
+   * @param objectCategory Category de l'objet
    * @param capabilityName Nom de la capacité
    * @param deviceName Nom du device pour Zwavejs2mqtt
    */
-  extractDataFromName(objectCagory: string, capabilityName: string, deviceName: string): ExtractedData | null {
+  extractDataFromName(objectCategory: string, capabilityName: string, deviceName: string): ExtractedData | null {
     // Transformation du nom pour rechercher sa fonction
     const baseName = capabilityName.replace(deviceName + '_', '').toLowerCase();
     // Les lumières avec une luminosité
-    if (objectCagory === 'light' && baseName.indexOf('dimmer') !== -1) {
+    if (objectCategory === 'light' && baseName.indexOf('dimmer') !== -1) {
       return {
         name: 'brightness',
         type: 'number'
       }
-    } else if (objectCagory === 'switch' && baseName.indexOf('switch') !== -1) {
+    } else if (objectCategory === 'switch' && baseName.indexOf('switch') !== -1) {
       // Les switchs sont ont des états on/off
       const multipleSwitch = /(.*)_(\d+)/.exec(baseName);
       if (multipleSwitch !== null) {
@@ -195,7 +192,7 @@ export class ZWaveJs implements Plugin {
           type: 'boolean'
         };
       }
-    } else if (objectCagory === 'sensor') {
+    } else if (objectCategory === 'sensor') {
       // Les sensors sont toutes les données pouvant êtres lues
       // Electrique
       const electricSensor = /^electric(\d*)_(\w+)_meter$/.exec(baseName);
@@ -255,11 +252,11 @@ export class ZWaveJs implements Plugin {
 
   /**
    * Obtenir la capacité à partir des données
-   * @param objectCagory Cagory de l'objet
+   * @param objectCategory Category de l'objet
    * @param capabilityData Données de la capacité
    */
-  getCapability(objectCagory: string, capabilityData: any): ExtractedCapability | null {
-    const dataFromName = this.extractDataFromName(objectCagory, capabilityData.name, capabilityData.device.name);
+  getCapability(objectCategory: string, capabilityData: any): ExtractedCapability | null {
+    const dataFromName = this.extractDataFromName(objectCategory, capabilityData.name, capabilityData.device.name);
     if (dataFromName !== null) {
       const capability: ExtractedCapability | null = { name: '', accessor: {} };
       capability.name = dataFromName.name;
@@ -291,10 +288,10 @@ export class ZWaveJs implements Plugin {
 
   /**
    * Lit les informations depuis les topics du discovery
-   * @param objectCagory Cagory de l'objet depuis le topic
+   * @param objectCategory Category de l'objet depuis le topic
    * @param message Message MQTT contenant les données
    */
-  async readFromDiscovery(objectCagory: string, message: Buffer) {
+  async readFromDiscovery(objectCategory: string, message: Buffer) {
     const capabilityData = JSON.parse(message.toString());
     let deviceIdentifier = 'zwavejs-' + capabilityData.device.name;
     // Première recherche dans le cache, l'identifiant du topic peut intégrer la salle dans la configuration
@@ -316,9 +313,9 @@ export class ZWaveJs implements Plugin {
     if (this.cache.devices.has(deviceIdentifier)) {
       device = this.cache.devices.get(deviceIdentifier)!;
     } else {
-      device = new Device(deviceIdentifier, capabilityData.device.name, DeviceCagories.Unknown);
+      device = new Device(deviceIdentifier, capabilityData.device.name, DeviceCategories.Unknown);
     }
-    const capabilityToAdd = this.getCapability(objectCagory, capabilityData);
+    const capabilityToAdd = this.getCapability(objectCategory, capabilityData);
     if (capabilityToAdd !== null) {
       // Mise en cache du topic pour la lecture des états
       // Ce cache permet de retrouver directement le nom de la capacité
@@ -328,7 +325,7 @@ export class ZWaveJs implements Plugin {
         this.topicsCache.set(capabilityData.state_topic, topicCache);
       }
       device.setCapability(capabilityToAdd.name, capabilityToAdd.accessor);
-      this.checkCagoryAndAddToCache(objectCagory, device, capabilityData.device);
+      this.checkCategoryAndAddToCache(objectCategory, device, capabilityData.device);
     }
   }
 

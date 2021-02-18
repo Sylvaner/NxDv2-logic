@@ -19,16 +19,21 @@ export class StoreService extends DbService {
 
   public async save(deviceData: DeviceData): Promise<DeviceData> {
     if (deviceData !== null) {
-      if (deviceData._id === undefined) {
-        await this.collections[DEVICES_COLLECTION].insertOne(deviceData);
-      } else {
-        await this.collections[DEVICES_COLLECTION].findOneAndUpdate({ _id: deviceData._id }, {
-          $set: {
-            id: deviceData.id,
-            name: deviceData.name,
-            capabilities: deviceData.capabilities
-          }
-        });
+      try {
+        if (deviceData._id === undefined) {
+          await this.collections[DEVICES_COLLECTION].insertOne(deviceData);
+        } else {
+          await this.collections[DEVICES_COLLECTION].findOneAndUpdate({ _id: deviceData._id }, {
+            $set: {
+              id: deviceData.id,
+              name: deviceData.name,
+              capabilities: deviceData.capabilities
+            }
+          });
+        }
+      }
+      catch (e) {
+        console.error(e);
       }
     }
     return deviceData;

@@ -18,7 +18,12 @@ export class StateService extends DbService {
   }
 
   public async save<T extends DeviceState>(deviceId: string, stateToSave: T): Promise<T> {
-    await this.collections[STATES_COLLECTION].replaceOne({ deviceId }, stateToSave, { upsert: true });
+    try {
+      await this.collections[STATES_COLLECTION].replaceOne({ deviceId }, stateToSave, { upsert: true });
+    }
+    catch (e) {
+      console.error(e);
+    }
     return stateToSave;
   }
 }

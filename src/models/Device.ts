@@ -1,7 +1,10 @@
 import { MqttAccessDesc } from '../interfaces/MqttAccessDesc';
 import DeviceState from './DeviceState';
 
-export enum DeviceCagories {
+/**
+ * Main categories
+ */
+export enum DeviceCategories {
   Light = 'light',
   Sensor = 'sensor',
   Switch = 'switch',
@@ -9,20 +12,35 @@ export enum DeviceCagories {
   Unknown = 'unknown'
 }
 
+/**
+ * Description of the device
+ */
 export interface DeviceData {
+  // MongoDb ID
   _id?: string,
+  // Mqtt ID
   id: string,
+  // Mqtt name
   name: string,
+  // List of capabilities
   capabilities: Capabilities,
-  category: DeviceCagories,
+  // Main category
+  category: DeviceCategories,
+  // Configuration
   config: object
 }
 
+/**
+ * Mqtt topic access description
+ */
 export interface CapabilityAccessor {
   get?: MqttAccessDesc,
   set?: MqttAccessDesc
 }
 
+/**
+ * List of capabilities
+ */
 export interface Capabilities {
   [capabilityName: string]: CapabilityAccessor
 }
@@ -30,18 +48,16 @@ export interface Capabilities {
 export class Device {
   public data: DeviceData;
   public state: DeviceState;
-  public deviceCagory: string = '';
 
-  constructor(id: string, name: string, deviceCagory: DeviceCagories) {
+  constructor(id: string, name: string, deviceCategory: DeviceCategories) {
     this.data = {
       id,
       name,
       capabilities: {},
-      category: deviceCagory,
+      category: deviceCategory,
       config: {}
     };
     this.state = { deviceId: id, date: Date.now() };
-    this.deviceCagory = deviceCagory;
   }
 
   /**

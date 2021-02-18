@@ -95,10 +95,28 @@ function start(): void {
   StoreService.getInstance().connect(storeCredentials, storeObjectsCollections).then(() => {
     StateService.getInstance().connect(stateCredentials, stateObjectsCollections).then(() => {
       const plugins = initPlugins();
-      mqttConnector.connect().then(() => {
-        subscribePluginsTopics(plugins);
-      });
+      connectToMqtt(plugins);
     });
+  });
+}
+
+/**
+ * Connect to Mqtt and start reconnect loop on disconnect
+ * 
+ * @param plugins List of plugins
+ */
+function connectToMqtt(plugins: Map<string, Plugin>) {
+  mqttConnector.connect(
+  // Connection callback
+  () => {
+    subscribePluginsTopics(plugins);
+  }, 
+  // Disconnection callback
+  () => {
+    setTimeout(() => {
+      // Retry connection
+      connectToMqtt(plugins);
+    }, 5000);
   });
 }
 
