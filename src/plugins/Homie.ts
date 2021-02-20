@@ -35,8 +35,8 @@ export class Homie implements Plugin {
    *
    * @return Mqtt topic prefix
    */
-  getTopicPrefix(): string {
-    return 'homie';
+  getTopicsPrefixs(): string[] {
+    return ['homie'];
   }
 
   /**
@@ -44,8 +44,8 @@ export class Homie implements Plugin {
    *
    * @returns Topic to subscribe
    */
-  getSubscribeTopic(): string {
-    return 'homie/#';
+  getTopicsToSubscribe(): string[] {
+    return ['homie/#'];
   }
 
   /**

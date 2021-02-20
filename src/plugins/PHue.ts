@@ -26,8 +26,8 @@ export class PHue implements Plugin {
    *
    * @return Mqtt topic prefix
    */
-  getTopicPrefix(): string {
-    return 'phue';
+  getTopicsPrefixs(): string[] {
+    return ['phue'];
   }
 
   /**
@@ -35,8 +35,8 @@ export class PHue implements Plugin {
    *
    * @returns Topic to subscribe
    */
-  getSubscribeTopic(): string {
-    return 'phue/#';
+  getTopicsToSubscribe(): string[] {
+    return ['phue/#'];
   }
 
   /**

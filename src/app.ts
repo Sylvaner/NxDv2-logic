@@ -15,8 +15,10 @@ function subscribePluginsTopics(plugins: Map<string, Plugin>): void {
   const topicsToSubscribe: string[] = [];
 
   plugins.forEach((translator) => {
-    topicsToSubscribe.push(translator.getSubscribeTopic());
-    messageParsers.set(translator.getTopicPrefix(), translator);
+    topicsToSubscribe.push(...translator.getTopicsToSubscribe());
+    for (const topicPrefix of translator.getTopicsPrefixs()) {
+      messageParsers.set(topicPrefix, translator);
+    }
   });
   mqttConnector.subscribe(topicsToSubscribe, mqttMessageParser);
 }
@@ -121,7 +123,7 @@ function connectToMqtt(plugins: Map<string, Plugin>) {
 }
 
 // List of plugins
-const enabledPlugins = ['Homie'];
+const enabledPlugins = ['Homie', 'HomeAssistant'];
 
 readConfigFile();
 

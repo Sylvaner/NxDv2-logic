@@ -25,8 +25,8 @@ export class Hue implements Plugin {
    *
    * @return Mqtt topic prefix
    */
-  getTopicPrefix(): string {
-    return 'hue';
+  getTopicsPrefixs(): string[] {
+    return ['hue'];
   }
 
   /**
@@ -34,8 +34,8 @@ export class Hue implements Plugin {
    *
    * @returns Topic to subscribe
    */
-  getSubscribeTopic(): string {
-    return 'hue/status/lights/#';
+  getTopicsToSubscribe(): string[] {
+    return ['hue/status/lights/#'];
   }
 
   /**

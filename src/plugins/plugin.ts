@@ -3,7 +3,7 @@
  */
 export interface Plugin {
   getName(): string;
-  getTopicPrefix(): string;
-  getSubscribeTopic(): string;
+  getTopicsPrefixs(): string[];
+  getTopicsToSubscribe(): string[];
   messageHandler(topic: string, message: Buffer): void;
 }

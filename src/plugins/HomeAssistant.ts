@@ -23,6 +23,7 @@ import { Plugin } from './plugin';
 import { CapabilityAccessor, Device, DeviceCategories } from '../models/Device';
 import { StoreService } from '../services/StoreService';
 import { StateService } from '../services/StateService';
+import { MqttAccessDesc } from '../interfaces/MqttAccessDesc';
 
 interface TopicCache {
   deviceIdentifier: string,
@@ -39,9 +40,10 @@ interface ExtractedCapability {
   accessor: CapabilityAccessor
 }
 
-export class ZWaveJs implements Plugin {
+export class HomeAssistant implements Plugin {
   advancedMode = false;
   debug = true;
+  specificTopics: string[] = []
 
   cache = {
     devices: new Map<string, Device>(),
@@ -57,6 +59,9 @@ export class ZWaveJs implements Plugin {
    * Lance la sauvegarde du cache à un interval régulier
    */
   constructor() {
+    if (process.env.HA_TOPICS) {
+      this.specificTopics = process.env.HA_TOPICS.split(',');
+    }
     setInterval(async () => {
       await this.saveCacheInDb();
     }, 10000);
@@ -68,7 +73,7 @@ export class ZWaveJs implements Plugin {
    * @returns Plugin name
    */
   getName(): string {
-    return 'ZWave JS';
+    return 'HomeAssistant';
   }
 
   /**
@@ -77,7 +82,7 @@ export class ZWaveJs implements Plugin {
    * @return Mqtt topic prefix
    */
   getTopicsPrefixs(): string[] {
-    return ['zwavejs'];
+    return ['homeassistant', ...this.specificTopics];
   }
 
   /**
@@ -86,7 +91,7 @@ export class ZWaveJs implements Plugin {
    * @returns Topic to subscribe
    */
   getTopicsToSubscribe(): string[] {
-    return ['zwavejs/#'];
+    return ['homeassistant/#', ...this.specificTopics.map(topic => topic + '/#')];
   }
 
   /**
@@ -108,7 +113,7 @@ export class ZWaveJs implements Plugin {
         catch (_) { }
         finally {
           // Sauvegarde
-          this.cache.devices.get(deviceIdentifier)!.data = await StoreService.getInstance().save(this.cache.devices.get(deviceIdentifier)!.data);
+          this.cache.devices.get(deviceIdentifier)!.data = await storeService.save(this.cache.devices.get(deviceIdentifier)!.data);
         }
       }
       this.lastCacheSave = Date.now();
@@ -171,7 +176,7 @@ export class ZWaveJs implements Plugin {
    */
   extractDataFromName(objectCategory: string, capabilityName: string, deviceName: string): ExtractedData | null {
     // Transformation du nom pour rechercher sa fonction
-    const baseName = capabilityName.replace(deviceName + '_', '').toLowerCase();
+    const baseName = capabilityName.replace(deviceName + '_', '').replace(deviceName, '').trim().toLowerCase();
     // Les lumières avec une luminosité
     if (objectCategory === 'light' && baseName.indexOf('dimmer') !== -1) {
       return {
@@ -192,7 +197,7 @@ export class ZWaveJs implements Plugin {
           type: 'boolean'
         };
       }
-    } else if (objectCategory === 'sensor') {
+    } else if (objectCategory === 'sensor' || objectCategory === 'binary_sensor') {
       // Les sensors sont toutes les données pouvant êtres lues
       // Electrique
       const electricSensor = /^electric(\d*)_(\w+)_meter$/.exec(baseName);
@@ -210,7 +215,7 @@ export class ZWaveJs implements Plugin {
         }
       }
       // Luminosité
-      if (baseName === 'illuminance') {
+      if (baseName.indexOf('illuminance') !== -1) {
         return {
           name: baseName,
           type: 'number'
@@ -224,14 +229,14 @@ export class ZWaveJs implements Plugin {
         }
       }
       // Batterie
-      if (baseName === 'battery_level') {
+      if (baseName === 'battery_level' || baseName === 'battery') {
         return {
           name: 'battery',
           type: 'number'
         }
       }
       // Contact / Présence
-      if (baseName === 'notification_access control') {
+      if (baseName === 'notification_access control' || baseName === 'occupancy') {
         return {
           name: 'contact',
           type: 'bool'
@@ -260,17 +265,24 @@ export class ZWaveJs implements Plugin {
     if (dataFromName !== null) {
       const capability: ExtractedCapability | null = { name: '', accessor: {} };
       capability.name = dataFromName.name;
-      // Ajoute l'état si il existe
+      // State topic indique le topic pour avoir l'état
       if ('state_topic' in capabilityData) {
-        capability.accessor.get = {
+        const capabilityAccessor: MqttAccessDesc = {
           topic: capabilityData.state_topic,
-          path: 'value',
-          format: 'json',
+          format: 'raw',
           type: dataFromName.type
         };
-        if ('unit_of_measurement' in capabilityData) {
-          capability.accessor.get.unit = capabilityData.unit_of_measurement;
+        // Value template indique le format du topic d'état
+        if ('value_template' in capabilityData) {
+          if (capabilityData.value_template.indexOf('{{ value_json.') === 0) {
+            capabilityAccessor.format = 'json';
+            capabilityAccessor.path = capabilityData.value_template.replace('{{ value_json.', '').replace(' }}', '');
+          }
         }
+        if ('unit_of_measurement' in capabilityData) {
+          capabilityAccessor.unit = capabilityData.unit_of_measurement;
+        }
+        capability.accessor.get = capabilityAccessor;
       }
       // Ajouter de la commande si elle existe commande
       if ('command_topic' in capabilityData) {
@@ -288,44 +300,37 @@ export class ZWaveJs implements Plugin {
 
   /**
    * Lit les informations depuis les topics du discovery
-   * @param objectCategory Category de l'objet depuis le topic
+   * @param capabilityCategory Category de la capacité reçue
    * @param message Message MQTT contenant les données
    */
-  async readFromDiscovery(objectCategory: string, message: Buffer) {
+  async readFromDiscovery(capabilityCategory: string, message: Buffer) {
     const capabilityData = JSON.parse(message.toString());
-    let deviceIdentifier = 'zwavejs-' + capabilityData.device.name;
-    // Première recherche dans le cache, l'identifiant du topic peut intégrer la salle dans la configuration
-    // TODO: A vérifier
-    if (!this.cache.devices.has(deviceIdentifier)) {
-      // Recherche à partir d'un topic, si les salles sont entrées dans le plugin,
-      // Le nom de la salle est intégré à l'identifiant du device, mais pas pour le topic
-      if ('state_topic' in capabilityData) {
-        // Extrait l'identifiant
-        const extractIdRegex = /^zwavejs\/(.*?)\/.*/;
-        const extractedId = extractIdRegex.exec(capabilityData.state_topic);
-        if (extractedId !== null) {
-          deviceIdentifier = 'zwavejs-' + extractedId[1];
+    // Extraire le canal de base en fonction du state topic
+    if ('state_topic' in capabilityData) {
+      const prefixId = capabilityData.state_topic.split('/')[0] + '-';
+      let deviceIdentifier = prefixId + capabilityData.device.name;
+      let device: Device;
+      if (this.cache.devices.has(deviceIdentifier)) {
+        device = this.cache.devices.get(deviceIdentifier)!;
+      } else {
+        device = new Device(deviceIdentifier, capabilityData.device.name, DeviceCategories.Unknown);
+      }
+      const capabilityToAdd = this.getCapability(capabilityCategory, capabilityData);
+      if (capabilityToAdd !== null) {
+        // Mise en cache du topic pour la lecture des états
+        // Ce cache permet de retrouver directement le nom de la capacité
+        // en fonction du topic lu
+        if ('get' in capabilityToAdd.accessor) {
+          let cacheCapabilityName = capabilityToAdd.name;
+          if (this.topicsCache.has(capabilityData.state_topic)) {
+            cacheCapabilityName = 'multiple';
+          }
+          const topicCache: TopicCache = { deviceIdentifier, capability: cacheCapabilityName };
+          this.topicsCache.set(capabilityData.state_topic, topicCache);
         }
+        device.setCapability(capabilityToAdd.name, capabilityToAdd.accessor);
+        this.checkCategoryAndAddToCache(capabilityCategory, device, capabilityData.device);
       }
-    }
-
-    let device: Device;
-    if (this.cache.devices.has(deviceIdentifier)) {
-      device = this.cache.devices.get(deviceIdentifier)!;
-    } else {
-      device = new Device(deviceIdentifier, capabilityData.device.name, DeviceCategories.Unknown);
-    }
-    const capabilityToAdd = this.getCapability(objectCategory, capabilityData);
-    if (capabilityToAdd !== null) {
-      // Mise en cache du topic pour la lecture des états
-      // Ce cache permet de retrouver directement le nom de la capacité
-      // en fonction du topic lu
-      if ('get' in capabilityToAdd.accessor) {
-        const topicCache: TopicCache = { deviceIdentifier, capability: capabilityToAdd.name };
-        this.topicsCache.set(capabilityData.state_topic, topicCache);
-      }
-      device.setCapability(capabilityToAdd.name, capabilityToAdd.accessor);
-      this.checkCategoryAndAddToCache(objectCategory, device, capabilityData.device);
     }
   }
 
@@ -337,24 +342,38 @@ export class ZWaveJs implements Plugin {
    */
   async messageHandler(topic: string, message: Buffer) {
     // Data extraction from topic
-    const deviceRegex = /^zwavejs\/(.*?)\/(.*?)\/(.*)$/;
-    const extractedData = deviceRegex.exec(topic);
-    if (extractedData !== null) {
-      if (extractedData[1] === '_DISCOVERY') {
-        this.readFromDiscovery(extractedData[2], message);
-      } else {
-        // Test le topic est connu
-        if (this.topicsCache.has(topic)) {
-          const target = this.topicsCache.get(topic)!;
-          const data = JSON.parse(message.toString());
-          // Test si une donnée est à sauvegarder
-          if ('value' in data) {
-            const deviceState = this.cache.devices.get(target.deviceIdentifier)!.state;
-            deviceState[target.capability] = data.value;
+    if (topic.indexOf('homeassistant') === 0) {
+      const deviceRegex = new RegExp('^homeassistant\/(.*?)[\/(.*?)]?\/(.*?)\/(.*?)\/config$');
+      const extractedData = deviceRegex.exec(topic);
+      if (extractedData !== null) {
+        this.readFromDiscovery(extractedData[1], message);
+      }
+    } else {
+      const deviceRegex = new RegExp('^(?:' + this.specificTopics.join('|') + ')\/([^\/]+)$');
+      const extractedData = deviceRegex.exec(topic);
+      try {
+        if (extractedData !== null) {
+          // Test le topic est connu
+          if (this.topicsCache.has(topic)) {
+            const target = this.topicsCache.get(topic)!;
+            let deviceState = this.cache.devices.get(target.deviceIdentifier)!.state;
+            deviceState['date'] = Date.now();
+            let data: any = message.toString();
+            // Tous les états sont stockés dans un JSON
+            if (target.capability === 'multiple') {
+              data = JSON.parse(data);
+              Object.assign(deviceState, data);
+            } else {
+              // Test si la données est au format JSON
+              if (this.cache.devices.get(target.deviceIdentifier)?.data.capabilities[target.capability].get?.type === 'json') {
+                data = JSON.parse(data);
+              }
+              deviceState[target.capability] = data;
+            }
             this.cache.devices.get(target.deviceIdentifier)!.state = await StateService.getInstance().save(target.deviceIdentifier, deviceState);
           }
-        }
-      }
+        }    
+      } catch(_) {}
     }
   }
 }
