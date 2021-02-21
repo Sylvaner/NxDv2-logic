@@ -1,38 +1,21 @@
 /**
- * Plugin pour la gestion des objets Zwave avec le plugin zwavejs
- * 
- * Configuration du plugin 
- * MQTT -> Prefix : zwavejs
- * 
- * Gateway -> Type : Named topics
- *         -> Payload category  : JSON Time-Value
- *         -> Ignore location
- *         -> HASS Disocvery
- *         -> Retained Discovery
- *         -> Disovery prefix : zwavejs/_DISCOVERY
- */
-/**
- *
- *
- * TODO gestion du state par la config
- *
- *
- *
+ * Plugin pour la gestion du format HomeAssistant
  */
 import { Plugin } from './plugin';
 import { CapabilityAccessor, Device, DeviceCategories } from '../models/Device';
 import { StoreService } from '../services/StoreService';
 import { StateService } from '../services/StateService';
-import { MqttAccessDesc } from '../interfaces/MqttAccessDesc';
+import { MqttAccessDesc, MqttFormat } from '../interfaces/MqttAccessDesc';
 
 interface TopicCache {
   deviceIdentifier: string,
   capability: string
 }
 
-interface ExtractedData {
+interface DeterminedData {
   name: string,
-  type: string
+  type: string,
+  unit?: string
 }
 
 interface ExtractedCapability {
@@ -40,10 +23,16 @@ interface ExtractedCapability {
   accessor: CapabilityAccessor
 }
 
+interface ValueFormat {
+  format: MqttFormat,
+  path?: string
+}
+
 export class HomeAssistant implements Plugin {
+  // En mode avancé, l'ensemble des commandes sont ajoutées
   advancedMode = false;
-  debug = true;
-  specificTopics: string[] = []
+  debug = false;
+  protocolTopics: string[] = []
 
   cache = {
     devices: new Map<string, Device>(),
@@ -60,7 +49,7 @@ export class HomeAssistant implements Plugin {
    */
   constructor() {
     if (process.env.HA_TOPICS) {
-      this.specificTopics = process.env.HA_TOPICS.split(',');
+      this.protocolTopics = process.env.HA_TOPICS.split(',');
     }
     setInterval(async () => {
       await this.saveCacheInDb();
@@ -82,7 +71,7 @@ export class HomeAssistant implements Plugin {
    * @return Mqtt topic prefix
    */
   getTopicsPrefixs(): string[] {
-    return ['homeassistant', ...this.specificTopics];
+    return ['homeassistant', ...this.protocolTopics];
   }
 
   /**
@@ -91,7 +80,7 @@ export class HomeAssistant implements Plugin {
    * @returns Topic to subscribe
    */
   getTopicsToSubscribe(): string[] {
-    return ['homeassistant/#', ...this.specificTopics.map(topic => topic + '/#')];
+    return ['homeassistant/#', ...this.protocolTopics.map(topic => topic + '/#')];
   }
 
   /**
@@ -102,7 +91,6 @@ export class HomeAssistant implements Plugin {
       const storeService = StoreService.getInstance();
       // Sauvegarde l'ensemble des devices
       for (const deviceIdentifier of this.cache.devices.keys()) {
-        this.cleanBeforeSave(deviceIdentifier);
         try {
           // Test si le device a déjà un champ _id pour éviter un doublon en base de données
           if (!('_id' in this.cache.devices.get(deviceIdentifier)!.data)) {
@@ -113,32 +101,14 @@ export class HomeAssistant implements Plugin {
         catch (_) { }
         finally {
           // Sauvegarde
+          if (this.debug) {
+            console.log('Save device ' + deviceIdentifier);
+            console.log(' - Capabilities: ' + Object.keys(this.cache.devices.get(deviceIdentifier)!.data.capabilities).join(', '));
+          }
           this.cache.devices.get(deviceIdentifier)!.data = await storeService.save(this.cache.devices.get(deviceIdentifier)!.data);
         }
       }
       this.lastCacheSave = Date.now();
-    }
-  }
-
-  /**
-   * Nettoie et ajoute certains paramètres manquant avant la sauvegarde
-   *
-   * @param deviceIdentifier Identifiant du périphérique
-   */
-  cleanBeforeSave(deviceIdentifier: string): void {
-    const device = this.cache.devices.get(deviceIdentifier)!;
-    // Ajout du reachable
-    if (!('status' in device.data.capabilities)) {
-      const mqttNode = device.data.id.replace('zwavejs-', '');
-      device.setCapability('reachable', {
-        get: {
-          topic: 'zwavejs/' + mqttNode + '/status',
-          path: 'value',
-          format: 'json',
-          type: 'boolean'
-        }
-      });
-      this.cache.devices.set(deviceIdentifier, device);
     }
   }
 
@@ -168,13 +138,13 @@ export class HomeAssistant implements Plugin {
   }
 
   /**
-   * Extrait les données à partir du nom du topic
+   * Détermine les données à partir du nom du topic
    *
    * @param objectCategory Category de l'objet
    * @param capabilityName Nom de la capacité
    * @param deviceName Nom du device pour Zwavejs2mqtt
    */
-  extractDataFromName(objectCategory: string, capabilityName: string, deviceName: string): ExtractedData | null {
+  determineDataFromName(objectCategory: string, capabilityName: string, deviceName: string): DeterminedData | null {
     // Transformation du nom pour rechercher sa fonction
     const baseName = capabilityName.replace(deviceName + '_', '').replace(deviceName, '').trim().toLowerCase();
     // Les lumières avec une luminosité
@@ -200,17 +170,36 @@ export class HomeAssistant implements Plugin {
     } else if (objectCategory === 'sensor' || objectCategory === 'binary_sensor') {
       // Les sensors sont toutes les données pouvant êtres lues
       // Electrique
-      const electricSensor = /^electric(\d*)_(\w+)_meter$/.exec(baseName);
+      // Peut avoir un numéro, une information sur le type de données et une information complémentaire
+      const electricSensor = /^electric(\d*)_(\w+)_(.*)$/.exec(baseName);
       if (electricSensor !== null) {
-        if (electricSensor[2] === 'w') {
-          return {
-            name: 'power' + electricSensor[1],
-            type: 'number'
-          };
+        let suffix = '';
+        if (electricSensor[1] !== '') {
+          suffix += '_' + electricSensor[1];
+        }
+        if (electricSensor[3] !== '') {
+          suffix += '_' + electricSensor[3];
+        }
+        let capabilityName = '';
+        let unit = '';
+        if (electricSensor[2] === 'w' || electricSensor[2] === 'power') {
+          capabilityName = 'power' + suffix;
+          unit = 'W';
         } else if (electricSensor[2] === 'kwh') {
+          capabilityName = 'consumption' + suffix;
+          unit = 'kWh';
+        } else if (electricSensor[2] === 'a') {
+          capabilityName = 'intensity' + suffix;
+          unit = 'A';
+        } else if (electricSensor[2] === 'v') {
+          capabilityName = 'volt' + suffix;
+          unit = 'V'
+        }
+        if (capabilityName !== '') {
           return {
-            name: 'consumption' + electricSensor[1],
-            type: 'number'
+            name: capabilityName,
+            type: 'number',
+            unit: unit
           };
         }
       }
@@ -225,7 +214,8 @@ export class HomeAssistant implements Plugin {
       if (baseName.indexOf('temperature') !== -1) {
         return {
           name: 'temperature',
-          type: 'number'
+          type: 'number',
+          unit: '°C'
         }
       }
       // Batterie
@@ -256,42 +246,77 @@ export class HomeAssistant implements Plugin {
   }
 
   /**
+   * Prépare l'objet de la capacité
+   * 
+   * @param determinedData Données de la capacité déterminées à partir du nom
+   */
+  prepareCapabilityAccessor(determinedData: DeterminedData): ExtractedCapability {
+    const capability: ExtractedCapability | null = { name: '', accessor: {} };
+    capability.name = determinedData.name;
+    return capability;
+  }
+
+  /**
+   * Extraire le format de donnée de la capacité
+   * 
+   * @param capabilityData Données de la capacité
+   */
+  extractValueFormat(capabilityData: any): ValueFormat | null {
+    if ('value_template' in capabilityData) {
+      const valueFormat: ValueFormat = {
+        format: 'raw'
+      }
+      if (capabilityData.value_template.indexOf('{{ value_json.') === 0) {
+        valueFormat.format = 'json';
+        // Chemin de la donnée au format JSON
+        valueFormat.path = capabilityData.value_template.replace('{{ value_json.', '').replace(' }}', '');
+      }
+    }
+    return null;
+  }
+
+  /**
    * Obtenir la capacité à partir des données
    * @param objectCategory Category de l'objet
    * @param capabilityData Données de la capacité
    */
-  getCapability(objectCategory: string, capabilityData: any): ExtractedCapability | null {
-    const dataFromName = this.extractDataFromName(objectCategory, capabilityData.name, capabilityData.device.name);
-    if (dataFromName !== null) {
-      const capability: ExtractedCapability | null = { name: '', accessor: {} };
-      capability.name = dataFromName.name;
+  getCapabilityData(objectCategory: string, capabilityData: any): ExtractedCapability | null {
+    const determinedData = this.determineDataFromName(objectCategory, capabilityData.name, capabilityData.device.name);
+    // Si la capacité est gérée
+    if (determinedData !== null) {
+      const capability = this.prepareCapabilityAccessor(determinedData);
       // State topic indique le topic pour avoir l'état
-      if ('state_topic' in capabilityData) {
-        const capabilityAccessor: MqttAccessDesc = {
-          topic: capabilityData.state_topic,
-          format: 'raw',
-          type: dataFromName.type
-        };
-        // Value template indique le format du topic d'état
-        if ('value_template' in capabilityData) {
-          if (capabilityData.value_template.indexOf('{{ value_json.') === 0) {
-            capabilityAccessor.format = 'json';
-            capabilityAccessor.path = capabilityData.value_template.replace('{{ value_json.', '').replace(' }}', '');
-          }
-        }
-        if ('unit_of_measurement' in capabilityData) {
-          capabilityAccessor.unit = capabilityData.unit_of_measurement;
-        }
-        capability.accessor.get = capabilityAccessor;
+      const capabilityAccessor: MqttAccessDesc = {
+        topic: capabilityData.state_topic,
+        format: 'raw',
+        type: determinedData.type
+      };
+      // Value template indique le format du topic d'état
+      const valueFormat = this.extractValueFormat(capabilityData);
+      if (valueFormat !== null) {
+        capabilityAccessor.format = valueFormat.format;
+        capabilityAccessor.path = valueFormat.path;
       }
+      // Information sur l'unité
+      if ('unit_of_measurement' in capabilityData) {
+        capabilityAccessor.unit = capabilityData.unit_of_measurement;
+      } else if ('unit' in determinedData) {
+        capabilityAccessor.unit = determinedData.unit;
+      }
+      capability.accessor.get = capabilityAccessor;
       // Ajouter de la commande si elle existe commande
       if ('command_topic' in capabilityData) {
         capability.accessor.set = {
           topic: capabilityData.command_topic,
-          path: 'value',
-          format: 'json',
-          type: dataFromName.type
+          path: '',
+          format: 'raw',
+          type: determinedData.type
         };
+        // La commande a le même format que le statut
+        if (valueFormat !== null) {
+          capability.accessor.set.format = valueFormat.format;
+          capability.accessor.set.path = valueFormat.path;
+        }
       }
       return capability;
     }
@@ -300,6 +325,8 @@ export class HomeAssistant implements Plugin {
 
   /**
    * Lit les informations depuis les topics du discovery
+   * Format : https://www.home-assistant.io/docs/mqtt/discovery/
+   * 
    * @param capabilityCategory Category de la capacité reçue
    * @param message Message MQTT contenant les données
    */
@@ -307,21 +334,25 @@ export class HomeAssistant implements Plugin {
     const capabilityData = JSON.parse(message.toString());
     // Extraire le canal de base en fonction du state topic
     if ('state_topic' in capabilityData) {
+      // Prefix contenant le topic de base des devices, en général le nom du protocol
       const prefixId = capabilityData.state_topic.split('/')[0] + '-';
       let deviceIdentifier = prefixId + capabilityData.device.name;
       let device: Device;
+      // Récupération du device de périphérique depuis le cache ou création d'un nouveau
       if (this.cache.devices.has(deviceIdentifier)) {
         device = this.cache.devices.get(deviceIdentifier)!;
       } else {
         device = new Device(deviceIdentifier, capabilityData.device.name, DeviceCategories.Unknown);
       }
-      const capabilityToAdd = this.getCapability(capabilityCategory, capabilityData);
+      const capabilityToAdd = this.getCapabilityData(capabilityCategory, capabilityData);
       if (capabilityToAdd !== null) {
         // Mise en cache du topic pour la lecture des états
         // Ce cache permet de retrouver directement le nom de la capacité
         // en fonction du topic lu
         if ('get' in capabilityToAdd.accessor) {
           let cacheCapabilityName = capabilityToAdd.name;
+          // Changement du nom du raccourci à multiple dans le cas
+          // d'un topic contenant plusieurs informations
           if (this.topicsCache.has(capabilityData.state_topic)) {
             cacheCapabilityName = 'multiple';
           }
@@ -341,15 +372,15 @@ export class HomeAssistant implements Plugin {
    * @param message Message to parse
    */
   async messageHandler(topic: string, message: Buffer) {
-    // Data extraction from topic
+    // Test si c'est un message
     if (topic.indexOf('homeassistant') === 0) {
-      const deviceRegex = new RegExp('^homeassistant\/(.*?)[\/(.*?)]?\/(.*?)\/(.*?)\/config$');
-      const extractedData = deviceRegex.exec(topic);
+      const configDataRegex = new RegExp('^homeassistant\/(.*?)[\/(.*?)]?\/(.*?)\/(.*?)\/config$');
+      const extractedData = configDataRegex.exec(topic);
       if (extractedData !== null) {
         this.readFromDiscovery(extractedData[1], message);
       }
     } else {
-      const deviceRegex = new RegExp('^(?:' + this.specificTopics.join('|') + ')\/([^\/]+)$');
+      const deviceRegex = new RegExp('^(?:' + this.protocolTopics.join('|') + ')\/([^\/]+)$');
       const extractedData = deviceRegex.exec(topic);
       try {
         if (extractedData !== null) {

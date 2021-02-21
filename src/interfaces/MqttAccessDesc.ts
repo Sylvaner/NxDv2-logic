@@ -1,7 +1,7 @@
 /**
  * Format of the topic payload
  */
-type MqttFormat = 'raw' | 'json';
+export type MqttFormat = 'raw' | 'json';
 
 /**
  * Mqtt data description
