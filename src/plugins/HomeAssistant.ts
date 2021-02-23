@@ -43,6 +43,8 @@ export class HomeAssistant implements Plugin {
 
   topicsCache = new Map<string, TopicCache>();
 
+  saveToDbLoop: NodeJS.Timeout;
+
   /**
    * Constructeur
    * Lance la sauvegarde du cache à un interval régulier
@@ -51,7 +53,7 @@ export class HomeAssistant implements Plugin {
     if (process.env.HA_TOPICS) {
       this.protocolTopics = process.env.HA_TOPICS.split(',');
     }
-    setInterval(async () => {
+    this.saveToDbLoop = setInterval(async () => {
       await this.saveCacheInDb();
     }, 10000);
   }

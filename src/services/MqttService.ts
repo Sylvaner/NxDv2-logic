@@ -31,7 +31,7 @@ export class MqttService {
     if (this.config.useTls) {
       protocol = protocol + 's';
     }
-    this.mqttClient = mqtt.connect(`${protocol}://${this.config.server}`, {
+    this.mqttClient = mqtt.connect(`${protocol}://${this.config.server}:${this.config.port}`, {
       username: this.config.login,
       password: this.config.password,
       port: this.config.port
