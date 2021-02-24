@@ -4,6 +4,7 @@ import { StateService } from './services/StateService';
 import { MqttConfig } from './interfaces/MqttConfig';
 import { MqttService } from './services/MqttService';
 import * as dotenv from 'dotenv';
+import * as fs from 'fs';
 
 /**
  * Subscribe topics for each plugins
@@ -60,10 +61,24 @@ function initPlugins(): Map<string, Plugin> {
 }
 
 /**
- * Read .env file
+ * Read configuration file
+ * Priority:
+ *  - .env
+ *  - ../.env
+ *  - /etc/nextdom/nextdom.conf
  */
-function readConfigFile(): void {
-  dotenv.config({ path: `${__dirname}/../.env` });
+function readConfigFile(): boolean {
+  if (fs.existsSync(`${__dirname}/.env`)) {
+    dotenv.config({ path: `${__dirname}/.env` });
+    return true;
+  } else if (fs.existsSync(`${__dirname}/../.env`)) {
+    dotenv.config({ path: `${__dirname}/../.env` });
+    return true;
+  } else if (fs.existsSync('/etc/nextdom/nextdom.conf')) {
+    dotenv.config({ path: '/etc/nextdom/nextdom.conf' });
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -125,7 +140,10 @@ function connectToMqtt(plugins: Map<string, Plugin>) {
 // List of plugins
 const enabledPlugins = ['Homie', 'HomeAssistant'];
 
-readConfigFile();
+if (!readConfigFile()) {
+  console.error('Unable to read config file.');
+  process.exit(1);
+}
 
 const mqttConfig: MqttConfig = {
   login: process.env.MQTT_USER!,

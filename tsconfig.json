@@ -11,5 +11,6 @@
     "strict": true,
     "noUnusedLocals": true
   },
+  "exclude": ["tests", "*.ts", "*.js"],
   "lib": ["es2015"]
 }
