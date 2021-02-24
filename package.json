@@ -6,7 +6,7 @@
   "scripts": {
     "start": "tsc && node dist/app.js",
     "test": "jest",
-    "test-cover": "jest --coverage --collectCoverageFrom=src/**/*.ts",
+    "test-coverage": "jest --coverage --collectCoverageFrom=src/**/*.ts",
     "build": "tsc -p ."
   },
   "author": "",
