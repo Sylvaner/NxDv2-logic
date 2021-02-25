@@ -1,6 +1,13 @@
 import { HomeAssistant } from "../../src/plugins/HomeAssistant";
 
 describe('HomeAssistant', () => {
+  test('Getters', () => {
+    const homeAssistantPlugin = new HomeAssistant();
+    expect(homeAssistantPlugin.getName()).toBe('HomeAssistant');
+    expect(homeAssistantPlugin.getTopicsPrefixs()).toEqual(['homeassistant']);
+    expect(homeAssistantPlugin.getTopicsToSubscribe()).toEqual(['homeassistant/#']);
+  });
+
   test('Message from discovery', () => {
     const homeAssistantPlugin = new HomeAssistant();
     // @ts-ignore

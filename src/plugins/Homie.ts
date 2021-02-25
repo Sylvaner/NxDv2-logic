@@ -67,12 +67,14 @@ export class Homie implements Plugin {
         // Test si le device a déjà un champ _id pour éviter un doublon en base de données
         if (!('_id' in this.cache.get(deviceIdentifier)!.data)) {
           // Essai de le retrouver depuis la base de données si celui-ci existe
-          const storedDevice = await storeService.getDevice(deviceIdentifier);
-          if (storedDevice !== null) {
-            this.cache.get(deviceIdentifier)!.data._id = storedDevice._id;
-            this.cache.get(deviceIdentifier)!.data.category = storedDevice.category;
-            this.cache.get(deviceIdentifier)!.data.config = storedDevice.config;
-          }
+          try {
+            const storedDevice = await storeService.getDevice(deviceIdentifier);
+            if (storedDevice !== null && storedDevice !== undefined) {
+              this.cache.get(deviceIdentifier)!.data._id = storedDevice._id;
+              this.cache.get(deviceIdentifier)!.data.category = storedDevice.category;
+              this.cache.get(deviceIdentifier)!.data.config = storedDevice.config;
+            }
+          } catch (_) {}
         }
         // Sauvegarde
         this.cache.get(deviceIdentifier)!.data = await StoreService.getInstance().save(this.cache.get(deviceIdentifier)!.data);

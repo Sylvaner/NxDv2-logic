@@ -17,26 +17,33 @@ export class StoreService extends DbService {
     return StoreService.instance!;
   }
 
-  public async save(deviceData: DeviceData): Promise<DeviceData> {
-    if (deviceData !== null) {
-      try {
-        if (deviceData._id === undefined) {
-          await this.collections[DEVICES_COLLECTION].insertOne(deviceData);
-        } else {
-          await this.collections[DEVICES_COLLECTION].findOneAndUpdate({ _id: deviceData._id }, {
-            $set: {
-              id: deviceData.id,
-              name: deviceData.name,
-              capabilities: deviceData.capabilities
-            }
-          });
+  public save(deviceData: DeviceData): Promise<DeviceData> {
+    return new Promise<DeviceData>(async (resolve, reject) => {
+      if (deviceData !== null) {
+        try {
+          if (deviceData._id === undefined) {
+            console.warn('ttt')
+            console.warn(deviceData);
+            const t = await this.collections[DEVICES_COLLECTION].insertOne(deviceData);
+            console.warn(t);
+            console.warn(deviceData);
+          } else {
+            await this.collections[DEVICES_COLLECTION].findOneAndUpdate({ _id: deviceData._id }, {
+              $set: {
+                id: deviceData.id,
+                name: deviceData.name,
+                capabilities: deviceData.capabilities
+              }
+            });
+          }
+        }
+        catch (e) {
+          reject(e);
+//          console.error(e);
         }
       }
-      catch (e) {
-        console.error(e);
-      }
-    }
-    return deviceData;
+      resolve(deviceData);
+    });
   }
 
   public getDevice(deviceId: string): Promise<DeviceData> {
@@ -44,7 +51,7 @@ export class StoreService extends DbService {
       if (this.collections[DEVICES_COLLECTION] === undefined) {
         reject();
       }
-      this.collections[DEVICES_COLLECTION].findOne({ id: deviceId }).then((targetDevice) => {
+        this.collections[DEVICES_COLLECTION].findOne({ id: deviceId }).then((targetDevice) => {
         resolve(targetDevice);
       }).catch(() => {
         reject();
