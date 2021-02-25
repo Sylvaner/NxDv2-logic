@@ -1,0 +1,20 @@
+[Unit]
+Description=NextDom Logic Daemon
+After=network-online.target
+ 
+[Service]
+Type=simple
+ 
+User=nextdom
+Group=nextdom
+UMask=007
+ 
+ExecStart=/usr/bin/env node /usr/local/nextdom/logic/app.js
+ 
+Restart=on-failure
+ 
+# Configures the time to wait before service is stopped forcefully.
+TimeoutStopSec=300
+ 
+[Install]
+WantedBy=multi-user.target
