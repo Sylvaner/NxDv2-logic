@@ -156,3 +156,32 @@ const mqttConnector = new MqttService(mqttConfig);
 const messageParsers = new Map<string, Plugin>();
 
 start();
+
+setTimeout(() => {
+  /* @ts-ignore */
+  mqttConnector.mqttClient.publish('homie/lights-2/lights/$name', Buffer.from('Lights', 'utf8'));
+  /* @ts-ignore */
+  mqttConnector.mqttClient.publish('homie/lights-2/lights/$properties', Buffer.from('on,bri', 'utf8'));
+  /* @ts-ignore */
+  mqttConnector.mqttClient.publish('homie/lights-2/lights/on/$name', Buffer.from('On', 'utf8'));
+  /* @ts-ignore */
+  mqttConnector.mqttClient.publish('homie/lights-2/lights/on/$datatype', Buffer.from('boolean', 'utf8'));
+  /* @ts-ignore */
+  mqttConnector.mqttClient.publish('homie/lights-2/lights/on/$settable', Buffer.from('true', 'utf8'));
+  /* @ts-ignore */
+  mqttConnector.mqttClient.publish('homie/lights-2/lights/bri/$name', Buffer.from('Brightness', 'utf8'));
+  /* @ts-ignore */
+  mqttConnector.mqttClient.publish('homie/lights-2/lights/bri/$datatype', Buffer.from('integer', 'utf8'));
+  /* @ts-ignore */
+  mqttConnector.mqttClient.publish('homie/lights-2/lights/bri/$settable', Buffer.from('true', 'utf8'));
+  /* @ts-ignore */
+  mqttConnector.mqttClient.publish('homie/lights-2/lights/bri/$format', Buffer.from('1:254', 'utf8'));
+  /* @ts-ignore */
+  mqttConnector.mqttClient.publish('homie/lights-2/$homie', Buffer.from('4.0', 'utf8'));
+  /* @ts-ignore */
+  mqttConnector.mqttClient.publish('homie/lights-2/$name', Buffer.from('My light', 'utf8'));
+  /* @ts-ignore */
+  mqttConnector.mqttClient.publish('homie/lights-2/$state', Buffer.from('ready', 'utf8'));
+  /* @ts-ignore */
+  mqttConnector.mqttClient.publish('homie/lights-2/$nodes', Buffer.from('lights', 'utf8'));
+}, 3000);
