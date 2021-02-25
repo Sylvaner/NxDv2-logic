@@ -15,6 +15,9 @@ echo ">>> Install dependencies"
 npm install
 echo ">>> Build app"
 npm run build
+if [ $? -ne 0 ]; then
+  exit 1
+fi
 
 echo ">>> Clean"
 rm -fr src
