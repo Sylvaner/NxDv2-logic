@@ -30,20 +30,16 @@ interface ValueFormat {
 
 export class HomeAssistant implements Plugin {
   // En mode avancé, l'ensemble des commandes sont ajoutées
-  advancedMode = false;
-  debug = false;
-  protocolTopics: string[] = []
-
-  cache = {
+  private advancedMode = false;
+  private debug = false;
+  private protocolTopics: string[] = []
+  private cache = {
     devices: new Map<string, Device>(),
   };
-
-  lastCacheChange: number = 0;
-  lastCacheSave: number = -1;
-
-  topicsCache = new Map<string, TopicCache>();
-
-  saveToDbLoop: NodeJS.Timeout;
+  private lastCacheChange: number = 0;
+  private lastCacheSave: number = -1;
+  private topicsCache = new Map<string, TopicCache>();
+  private saveToDbLoop: NodeJS.Timeout;
 
   /**
    * Constructeur
@@ -56,6 +52,13 @@ export class HomeAssistant implements Plugin {
     this.saveToDbLoop = setInterval(async () => {
       await this.saveCacheInDb();
     }, 10000);
+  }
+
+  /**
+   * Stop plugin
+   */
+  stop() {
+    clearInterval(this.saveToDbLoop);
   }
 
   /**
