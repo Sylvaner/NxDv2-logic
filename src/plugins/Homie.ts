@@ -10,13 +10,14 @@ export class Homie implements Plugin {
   private cache = new Map<string, Device>()
   private lastCacheChange: number = 0;
   private lastCacheSave: number = -1;
-
+  private saveToDbLoop: NodeJS.Timeout;
+  
   /**
    * Constructeur
    * Lance la sauvegarde du cache à un interval régulier
    */
   constructor() {
-    setInterval(async () => {
+    this.saveToDbLoop = setInterval(async () => {
       await this.saveCacheInDb();
     }, 10000);
   }
@@ -28,6 +29,13 @@ export class Homie implements Plugin {
    */
   getName(): string {
     return 'Homie';
+  }
+
+  /**
+   * Stop plugin
+   */
+  stop() {
+    clearInterval(this.saveToDbLoop);
   }
 
   /**

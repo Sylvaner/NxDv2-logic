@@ -1,23 +1,5 @@
 /**
  * Plugin pour la gestion des objets Zwave avec le plugin zwavejs
- * 
- * Configuration du plugin 
- * MQTT -> Prefix : zwavejs
- * 
- * Gateway -> Type : Named topics
- *         -> Payload category  : JSON Time-Value
- *         -> Ignore location
- *         -> HASS Disocvery
- *         -> Retained Discovery
- *         -> Disovery prefix : zwavejs/_DISCOVERY
- */
-/**
- *
- *
- * TODO gestion du state par la config
- *
- *
- *
  */
 import { Plugin } from './plugin';
 import { CapabilityAccessor, Device, DeviceCategories } from '../models/Device';
