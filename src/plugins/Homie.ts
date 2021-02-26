@@ -74,10 +74,13 @@ export class Homie implements Plugin {
               this.cache.get(deviceIdentifier)!.data.category = storedDevice.category;
               this.cache.get(deviceIdentifier)!.data.config = storedDevice.config;
             }
-          } catch (_) {}
+          } catch (_) { // Device not found
+          }
         }
         // Sauvegarde
-        this.cache.get(deviceIdentifier)!.data = await StoreService.getInstance().save(this.cache.get(deviceIdentifier)!.data);
+        try {
+          this.cache.get(deviceIdentifier)!.data = await StoreService.getInstance().save(this.cache.get(deviceIdentifier)!.data);
+        } catch (e) { console.error(e); }
       }
       this.lastCacheSave = Date.now();
     }

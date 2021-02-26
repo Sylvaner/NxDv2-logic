@@ -5,15 +5,19 @@ interface MockedMongoClientOptions {
 
 class MockedCollection {
   constructor(public collectionName: string) {}
-  insertOne = jest.fn().mockImplementation((value) => Promise.resolve(() => {
-    console.warn(value);
-    value._id = '123456789';
-    console.warn(value);
-    return value;
-  }));
+  insertOne = jest.fn().mockImplementation((value: any): Promise<void> => {
+    return new Promise<void>((resolve) => {
+      value._id = 'abcdef0123456789abcdef01';
+      resolve();
+    });
+  });
   replaceOne = jest.fn();
-  findOneAndUpdate = jest.fn();
-  findOneAndReplace = jest.fn().mockImplementation(() => Promise.resolve());
+  findOneAndUpdate = jest.fn().mockImplementation((filter: any, data: any, options: any): Promise<void> => {
+    return new Promise<void>((resolve) => {
+      resolve();
+    });
+  });
+  findOneAndReplace = jest.fn();
   findOne = jest.fn().mockImplementation(() => Promise.reject());
 }
 

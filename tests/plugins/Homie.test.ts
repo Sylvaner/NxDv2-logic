@@ -44,6 +44,38 @@ describe('Homie', () => {
     expect(device!.data.capabilities.on.get!.topic).toBe('homie/lights-2/lights/on');
   });
 
+  test('Store new device', async () => {
+    await StoreService.getInstance().connect({}, ['devices']);
+    const homiePlugin = new Homie();
+    homiePlugin.stop();
+    createTestDevice(homiePlugin);
+    // @ts-ignore
+    await homiePlugin.saveCacheInDb();
+    // @ts-ignore
+    expect(homiePlugin.cache.get('lights-2').data._id).not.toBe('');
+    // @ts-ignore
+    expect(StoreService.getInstance().collections['devices'].findOne.mock.calls.length).toBe(1);
+    // @ts-ignore
+    expect(StoreService.getInstance().collections['devices'].insertOne.mock.calls.length).toBe(1);
+    // @ts-ignore
+    expect(StoreService.getInstance().collections['devices'].findOneAndUpdate.mock.calls.length).toBe(0);
+  });
+
+  test('Store update device', async () => {
+    await StoreService.getInstance().connect({}, ['devices']);
+    const homiePlugin = new Homie();
+    homiePlugin.stop();
+    createTestDevice(homiePlugin);
+    // @ts-ignore
+    homiePlugin.cache.get('lights-2').data._id = 'ABCD';
+    // @ts-ignore
+    homiePlugin.saveCacheInDb();
+    // @ts-ignore
+    expect(StoreService.getInstance().collections['devices'].insertOne.mock.calls.length).toBe(0);
+    // @ts-ignore
+    expect(StoreService.getInstance().collections['devices'].findOneAndUpdate.mock.calls.length).toBe(1);
+  });
+
   test('State device', async () => {
     await StateService.getInstance().connect({}, ['states']);
     const homiePlugin = new Homie();
@@ -61,28 +93,5 @@ describe('Homie', () => {
     expect(StateService.getInstance().collections['states'].replaceOne.mock.calls[0][1].bri).toBe(125);
     // @ts-ignore
     expect(StateService.getInstance().collections['states'].replaceOne.mock.calls.length).toBe(2);
-  });
-
-  test('Store device', async () => {
-    await StoreService.getInstance().connect({}, ['devices']);
-    const homiePlugin = new Homie();
-    homiePlugin.stop();
-    createTestDevice(homiePlugin);
-    await homiePlugin.saveCacheInDb();
-    // @ts-ignore
-    expect(StoreService.getInstance().collections['devices'].findOne.mock.calls.length).toBe(1);
-    // @ts-ignore
-    expect(StoreService.getInstance().collections['devices'].insertOne.mock.calls.length).toBe(1);
-    // @ts-ignore
-    expect(StoreService.getInstance().collections['devices'].findOneAndUpdate.mock.calls.length).toBe(0);
-    // @ts-ignore
-    homiePlugin.lastCacheChange = Date.now();
-    // @ts-ignore
-//    console.warn(homiePlugin.cache.get('lights-2').data);
-    await homiePlugin.saveCacheInDb();
-    // @ts-ignore
-    expect(StoreService.getInstance().collections['devices'].insertOne.mock.calls.length).toBe(1);
-    // @ts-ignore
-    expect(StoreService.getInstance().collections['devices'].findOneAndUpdate.mock.calls.length).toBe(1);
   });
 });
