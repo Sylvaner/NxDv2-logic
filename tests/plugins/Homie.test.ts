@@ -92,9 +92,9 @@ describe('Homie', () => {
     expect(StateService.getInstance().collections['states'].replaceOne.mock.calls[0][1].on).toBeTruthy();
     homiePlugin.messageHandler('homie/lights-2/lights/bri', Buffer.from('125', 'utf8'));
     // @ts-ignore
-    expect(StateService.getInstance().collections['states'].replaceOne.mock.calls[0][0].deviceId).toBe('lights-2');
+    expect(StateService.getInstance().collections['states'].replaceOne.mock.calls[1][0].deviceId).toBe('lights-2');
     // @ts-ignore
-    expect(StateService.getInstance().collections['states'].replaceOne.mock.calls[0][1].bri).toBe(125);
+    expect(StateService.getInstance().collections['states'].replaceOne.mock.calls[1][1].bri).toBe(125);
     // @ts-ignore
     expect(StateService.getInstance().collections['states'].replaceOne.mock.calls.length).toBe(2);
   });
