@@ -19,6 +19,10 @@ function createTestDevice(homiePlugin: Homie): void {
 }
 
 describe('Homie', () => {
+  beforeEach(() => {
+    jest.useFakeTimers()
+  });
+
   test('Getters', () => {
     const homiePlugin = new Homie();
     expect(homiePlugin.getName()).toBe('Homie');

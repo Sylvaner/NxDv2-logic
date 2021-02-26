@@ -1,6 +1,10 @@
 import { HomeAssistant } from "../../src/plugins/HomeAssistant";
 
 describe('HomeAssistant', () => {
+  beforeEach(() => {
+    jest.useFakeTimers()
+  });
+  
   test('Getters', () => {
     const homeAssistantPlugin = new HomeAssistant();
     expect(homeAssistantPlugin.getName()).toBe('HomeAssistant');
