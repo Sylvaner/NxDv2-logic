@@ -1,6 +1,7 @@
 import { Homie } from "../../src/plugins/Homie";
 import { StateService } from '../../src/services/StateService';
 import { StoreService } from '../../src/services/StoreService';
+import { DbCredentials } from '../../src/services/DbService';
 
 function createTestDevice(homiePlugin: Homie): void {
   homiePlugin.messageHandler('homie/lights-2/lights/$name', Buffer.from('Lights', 'utf8'));
@@ -16,6 +17,13 @@ function createTestDevice(homiePlugin: Homie): void {
   homiePlugin.messageHandler('homie/lights-2/$name', Buffer.from('My light', 'utf8'));
   homiePlugin.messageHandler('homie/lights-2/$state', Buffer.from('ready', 'utf8'));
   homiePlugin.messageHandler('homie/lights-2/$nodes', Buffer.from('lights', 'utf8'));
+}
+
+const dbCredentials: DbCredentials = {
+  database: '',
+  host: '',
+  password: '',
+  user: ''
 }
 
 describe('Homie', () => {
@@ -49,7 +57,7 @@ describe('Homie', () => {
   });
 
   test('Store new device', async () => {
-    await StoreService.getInstance().connect({}, ['devices']);
+    await StoreService.getInstance().connect(dbCredentials, ['devices']);
     const homiePlugin = new Homie();
     homiePlugin.stop();
     createTestDevice(homiePlugin);
@@ -66,7 +74,7 @@ describe('Homie', () => {
   });
 
   test('Store update device', async () => {
-    await StoreService.getInstance().connect({}, ['devices']);
+    await StoreService.getInstance().connect(dbCredentials, ['devices']);
     const homiePlugin = new Homie();
     homiePlugin.stop();
     createTestDevice(homiePlugin);
@@ -81,7 +89,7 @@ describe('Homie', () => {
   });
 
   test('State device', async () => {
-    await StateService.getInstance().connect({}, ['states']);
+    await StateService.getInstance().connect(dbCredentials, ['states']);
     const homiePlugin = new Homie();
     homiePlugin.stop();
     createTestDevice(homiePlugin);

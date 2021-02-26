@@ -46,7 +46,7 @@ export class Hue implements Plugin {
    */
   async messageHandler(topic: string, message: Buffer) {
     // Le nom de l'objet se trouve dans la topic
-    const lightState: RegExp = /^hue\/status\/lights\/(.*)$/;
+    const lightState = /^hue\/status\/lights\/(.*)$/;
     const regExpResult = lightState.exec(topic);
     // Si la regex a matché
     if (regExpResult !== null) {

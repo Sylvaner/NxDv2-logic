@@ -1,4 +1,12 @@
 import { MongoClient, Db, Collection } from 'mongodb';
+
+export interface DbCredentials {
+  host: string,
+  database: string,
+  user: string,
+  password: string
+}
+
 interface CollectionIndex {
   [key: string]: Collection
 }
@@ -7,9 +15,8 @@ export class DbService {
   private client?: MongoClient;
   protected database?: Db;
   protected collections: CollectionIndex = {};
-  public baseCollections: string[] = [];
 
-  public connect(credentials: any, targetCollections: string[]): Promise<void> {
+  public connect(credentials: DbCredentials, targetCollections: string[]): Promise<void> {
     return new Promise(async (resolve) => {
       const uri = `mongodb://${credentials.user}:${credentials.password}@${credentials.host}/${credentials.database}?w=majority`;
       this.client = new MongoClient(uri, {

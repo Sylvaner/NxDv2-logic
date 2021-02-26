@@ -14,7 +14,7 @@ export class StateService extends DbService {
     if (StateService.instance === undefined) {
       StateService.instance = new StateService();
     }
-    return StateService.instance!;
+    return StateService.instance;
   }
 
   public async save<T extends DeviceState>(deviceId: string, stateToSave: T): Promise<T> {

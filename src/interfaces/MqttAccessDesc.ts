@@ -7,9 +7,9 @@ export type MqttFormat = 'raw' | 'json';
  * Mqtt data description
  */
 export class MqttAccessDesc {
-  topic: string = '';
+  topic = '';
   path?: string = '';
   format?: MqttFormat = 'raw';
-  type: string = '';
+  type = '';
   unit?: string = '';
 }

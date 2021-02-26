@@ -1,6 +1,7 @@
 import { HomeAssistant } from '../../src/plugins/HomeAssistant';
 import { StoreService } from '../../src/services/StoreService';
 import { StateService } from '../../src/services/StateService';
+import { DbCredentials } from '../../src/services/DbService';
 
 function createTestDevice(homeAssistant: HomeAssistant): void {
   homeAssistant.messageHandler(
@@ -11,6 +12,13 @@ function createTestDevice(homeAssistant: HomeAssistant): void {
     'homeassistant/sensor/0x00158d0001e0b1f8/illuminance_lux/config',
     Buffer.from('{"availability":[{"topic":"zigbee2mqtt/bridge/state"}],"device":{"identifiers":["zigbee2mqtt_0x00158d0001e0b1f8"],"manufacturer":"Xiaomi","model":"Aqara human body movement and illuminance sensor (RTCGQ11LM)","name":"0x00158d0001e0b1f8","sw_version":"Zigbee2MQTT 1.17.1"},"device_class":"illuminance","json_attributes_topic":"zigbee2mqtt/0x00158d0001e0b1f8","name":"0x00158d0001e0b1f8 illuminance lux","state_topic":"zigbee2mqtt/0x00158d0001e0b1f8","unique_id":"0x00158d0001e0b1f8_illuminance_lux_zigbee2mqtt","unit_of_measurement":"lx","value_template":"{{ value_json.illuminance }}"}', 'utf8')
   );
+}
+
+const dbCredentials: DbCredentials = {
+  database: '',
+  host: '',
+  password: '',
+  user: ''
 }
 
 describe('HomeAssistant', () => {
@@ -51,7 +59,7 @@ describe('HomeAssistant', () => {
   });
 
   test('Store new device', async () => {
-    await StoreService.getInstance().connect({}, ['devices']);
+    await StoreService.getInstance().connect(dbCredentials, ['devices']);
     const homeAssistantPlugin = new HomeAssistant();
     homeAssistantPlugin.stop();
     createTestDevice(homeAssistantPlugin);
@@ -68,7 +76,7 @@ describe('HomeAssistant', () => {
   });
 
   test('Store update device', async () => {
-    await StoreService.getInstance().connect({}, ['devices']);
+    await StoreService.getInstance().connect(dbCredentials, ['devices']);
     const homeAssistantPlugin = new HomeAssistant();
     homeAssistantPlugin.stop();
     createTestDevice(homeAssistantPlugin);
@@ -83,7 +91,7 @@ describe('HomeAssistant', () => {
   });
 
   test('State device', async () => {
-    await StateService.getInstance().connect({}, ['states']);
+    await StateService.getInstance().connect(dbCredentials, ['states']);
     const homeAssistantPlugin = new HomeAssistant();
     homeAssistantPlugin.stop();
     createTestDevice(homeAssistantPlugin);

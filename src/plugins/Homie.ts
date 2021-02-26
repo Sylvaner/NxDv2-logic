@@ -8,8 +8,8 @@ import {StateService} from "../services/StateService";
 
 export class Homie implements Plugin {
   private cache = new Map<string, Device>()
-  private lastCacheChange: number = 0;
-  private lastCacheSave: number = -1;
+  private lastCacheChange = 0;
+  private lastCacheSave = -1;
   private saveToDbLoop: NodeJS.Timeout;
   
   /**
@@ -86,7 +86,6 @@ export class Homie implements Plugin {
     }
   }
 
-
   /**
    * Transform raw message from string to the best type
    *
@@ -94,7 +93,7 @@ export class Homie implements Plugin {
    *
    * @return Transformed data
    */
-  private static extratMessageData(rawData: string): any {
+  private static extractMessageData(rawData: string): any {
     let data: any = rawData
     if (/^\d+$/.test(rawData)) {
       data = parseInt(rawData, 10);
@@ -141,7 +140,7 @@ export class Homie implements Plugin {
       // Donnée d'état d'une capacité
       } else if (dataFromTopic.length === 3) {
         if (dataFromTopic[2][0] !== '$') {
-          device.state[dataFromTopic[2]] = Homie.extratMessageData(message.toString());
+          device.state[dataFromTopic[2]] = Homie.extractMessageData(message.toString());
           device.state = await StateService.getInstance().save(deviceId, device.state);
           cacheChange = true;
         }
@@ -160,8 +159,8 @@ export class Homie implements Plugin {
         }
         switch (dataFromTopic[3]) {
           case '$settable':
-            const settable = Homie.extratMessageData(message.toString());
-            if (!settable) {
+            // Si $settable est à false, alors on supprime la propriété set de la capacité
+            if (!Homie.extractMessageData(message.toString())) {
               delete device.data.capabilities[capabilityName].set;
               cacheChange = true;
             }

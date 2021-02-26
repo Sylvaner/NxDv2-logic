@@ -14,11 +14,11 @@ export class StoreService extends DbService {
     if (StoreService.instance === undefined) {
       StoreService.instance = new StoreService();
     }
-    return StoreService.instance!;
+    return StoreService.instance;
   }
 
   public save(deviceData: DeviceData): Promise<DeviceData> {
-    return new Promise<DeviceData>(async (resolve, reject) => {
+    return new Promise<DeviceData>((resolve, reject) => {
       if (deviceData !== null) {
         try {
           if (deviceData._id === undefined) {

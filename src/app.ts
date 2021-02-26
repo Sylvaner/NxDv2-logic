@@ -5,6 +5,7 @@ import { MqttConfig } from './interfaces/MqttConfig';
 import { MqttService } from './services/MqttService';
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
+import { DbCredentials } from './services/DbService';
 
 /**
  * Subscribe topics for each plugins
@@ -85,14 +86,14 @@ function readConfigFile(): boolean {
  * Connect to database and start daemon
  */
 function start(): void {
-  const storeCredentials = {
+  const storeCredentials: DbCredentials = {
     host: process.env.DB_HOST!,
     database: process.env.DB_DATABASE!,
     user: process.env.DB_USER!,
     password: process.env.DB_PASSWORD!
   };
 
-  const stateCredentials = {
+  const stateCredentials: DbCredentials = {
     host: process.env.DB_HOST!,
     database: process.env.DB_STATE_DATABASE!,
     user: process.env.DB_USER!,

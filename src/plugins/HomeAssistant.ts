@@ -36,8 +36,8 @@ export class HomeAssistant implements Plugin {
   private cache = {
     devices: new Map<string, Device>(),
   };
-  private lastCacheChange: number = 0;
-  private lastCacheSave: number = -1;
+  private lastCacheChange = 0;
+  private lastCacheSave = -1;
   private topicsCache = new Map<string, TopicCache>();
   private saveToDbLoop: NodeJS.Timeout;
 
@@ -57,7 +57,7 @@ export class HomeAssistant implements Plugin {
   /**
    * Stop plugin
    */
-  stop() {
+  stop(): void {
     clearInterval(this.saveToDbLoop);
   }
 
@@ -96,22 +96,23 @@ export class HomeAssistant implements Plugin {
       const storeService = StoreService.getInstance();
       // Sauvegarde l'ensemble des devices
       for (const deviceIdentifier of this.cache.devices.keys()) {
+        // Test si le device a déjà un champ _id pour éviter un doublon en base de données
+        if (!('_id' in this.cache.devices.get(deviceIdentifier)!.data)) {
+          // Essai de le retrouver depuis la base de données si celui-ci existe
+          try {
+            const storedDevice = await storeService.getDevice(deviceIdentifier);
+            if (storedDevice !== null && storedDevice !== undefined) {
+              this.cache.devices.get(deviceIdentifier)!.data._id = storedDevice._id;
+              this.cache.devices.get(deviceIdentifier)!.data.category = storedDevice.category;
+              this.cache.devices.get(deviceIdentifier)!.data.config = storedDevice.config;
+            }
+          } catch (_) { // Device not found
+          }
+        }
+        // Sauvegarde
         try {
-          // Test si le device a déjà un champ _id pour éviter un doublon en base de données
-          if (!('_id' in this.cache.devices.get(deviceIdentifier)!.data)) {
-            // Essai de le retrouver depuis la base de données si celui-ci existe
-            this.cache.devices.get(deviceIdentifier)!.data._id = (await storeService.getDevice(deviceIdentifier))._id
-          }
-        }
-        catch (_) { }
-        finally {
-          // Sauvegarde
-          if (this.debug) {
-            console.log('Save device ' + deviceIdentifier);
-            console.log(' - Capabilities: ' + Object.keys(this.cache.devices.get(deviceIdentifier)!.data.capabilities).join(', '));
-          }
-          this.cache.devices.get(deviceIdentifier)!.data = await storeService.save(this.cache.devices.get(deviceIdentifier)!.data);
-        }
+          this.cache.devices.get(deviceIdentifier)!.data = await StoreService.getInstance().save(this.cache.devices.get(deviceIdentifier)!.data);
+        } catch (e) { console.error(e); }
       }
       this.lastCacheSave = Date.now();
     }
@@ -341,7 +342,7 @@ export class HomeAssistant implements Plugin {
     if ('state_topic' in capabilityData) {
       // Prefix contenant le topic de base des devices, en général le nom du protocol
       const prefixId = capabilityData.state_topic.split('/')[0] + '-';
-      let deviceIdentifier = prefixId + capabilityData.device.name;
+      const deviceIdentifier = prefixId + capabilityData.device.name;
       let device: Device;
       // Récupération du device de périphérique depuis le cache ou création d'un nouveau
       if (this.cache.devices.has(deviceIdentifier)) {
@@ -392,7 +393,7 @@ export class HomeAssistant implements Plugin {
           // Test le topic est connu
           if (this.topicsCache.has(topic)) {
             const target = this.topicsCache.get(topic)!;
-            let deviceState = this.cache.devices.get(target.deviceIdentifier)!.state;
+            const deviceState = this.cache.devices.get(target.deviceIdentifier)!.state;
             deviceState['date'] = Date.now();
             let data: any = message.toString();
             // Tous les états sont stockés dans un JSON
