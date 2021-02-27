@@ -1,5 +1,4 @@
-import { MqttAccessDesc } from '../interfaces/MqttAccessDesc';
-import DeviceState from './DeviceState';
+import { MqttAccessDesc } from '../services/MqttService';
 
 /**
  * Main categories
@@ -10,6 +9,15 @@ export enum DeviceCategories {
   Switch = 'switch',
   Other = 'other',
   Unknown = 'unknown'
+}
+
+/**
+ * State of the device
+ */
+export default interface DeviceState {
+  deviceId: string,
+  date: number,
+  [key: string]: string | number | boolean
 }
 
 /**

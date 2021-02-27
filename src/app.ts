@@ -1,8 +1,7 @@
 import { Plugin } from './plugins/plugin';
 import { StoreService } from './services/StoreService';
 import { StateService } from './services/StateService';
-import { MqttConfig } from './interfaces/MqttConfig';
-import { MqttService } from './services/MqttService';
+import { MqttService, MqttConfig } from './services/MqttService';
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import { DbCredentials } from './services/DbService';

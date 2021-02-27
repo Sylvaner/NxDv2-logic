@@ -1,5 +1,29 @@
 import mqtt from 'mqtt';
-import { MqttConfig } from '../interfaces/MqttConfig';
+
+/**
+ * Format of the topic payload
+ */
+export type MqttFormat = 'raw' | 'json';
+
+/**
+ * Mqtt data description
+ */
+export class MqttAccessDesc {
+  topic = '';
+  path?: string = '';
+  format?: MqttFormat = 'raw';
+  type = '';
+  unit?: string = '';
+}
+
+export class MqttConfig {
+  server = 'localhost';
+  login = '';
+  password = '';
+  port?: number = 1883;
+  useTls?: boolean = false;
+}
+
 
 export class MqttService {
   private config: MqttConfig;

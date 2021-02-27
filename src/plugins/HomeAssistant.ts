@@ -5,7 +5,7 @@ import { Plugin } from './plugin';
 import { CapabilityAccessor, Device, DeviceCategories } from '../models/Device';
 import { StoreService } from '../services/StoreService';
 import { StateService } from '../services/StateService';
-import { MqttAccessDesc, MqttFormat } from '../interfaces/MqttAccessDesc';
+import { MqttFormat, MqttAccessDesc } from '../services/MqttService';
 
 interface TopicCache {
   deviceIdentifier: string,

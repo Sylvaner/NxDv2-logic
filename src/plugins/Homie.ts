@@ -34,7 +34,7 @@ export class Homie implements Plugin {
   /**
    * Stop plugin
    */
-  stop() {
+  stop(): void {
     clearInterval(this.saveToDbLoop);
   }
 

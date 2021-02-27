@@ -1,5 +1,5 @@
-import DeviceState from '../models/DeviceState';
 import { DbService } from './DbService';
+import DeviceState from '../models/Device';
 
 const STATES_COLLECTION = 'states';
 
