@@ -8,12 +8,13 @@ fi
 
 if ! [ -x "$(command -v node)" ]; then
   echo ">>> Install node"
-  apt-get install -y node npm
+  curl -fsSL https://deb.nodesource.com/setup_15.x | bash -
+  apt-get install -y nodejs
 fi
 
 if ! id -u "nextdom" > /dev/null 2>&1; then
   echo ">>> Création de l'utilisateur nextdom"
-  adduser --system --no-create-home --group nextdom
+  adduser --system --group nextdom
 fi
 
 if ! [ -f /etc/nextdom/nextdom.conf ]; then
@@ -28,7 +29,7 @@ mkdir -p $DEST_FOLDER
 cp -fr dist/* $DEST_FOLDER/
 chown nextdom:nextdom -R $DEST_FOLDER
 
-if ! [ -x "$(command -v systemctl)" ]; then
+if [ -x "$(command -v systemctl)" ]; then
   echo ">>> Create service in SystemD"
   cp nextdom-logic.service /etc/systemd/system/
   systemctl daemon-reload
@@ -40,4 +41,5 @@ else
   cp -fr nextdom-logic /etc/init.d/
   update-rc.d nextdom-logic defaults
   update-rc.d nextdom-logic enable
+  service nextdom-logic start
 fi
