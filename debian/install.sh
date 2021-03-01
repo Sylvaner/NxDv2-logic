@@ -14,7 +14,7 @@ fi
 
 if ! id -u "nextdom" > /dev/null 2>&1; then
   echo ">>> Création de l'utilisateur nextdom"
-  adduser --system --group nextdom
+  adduser --system --shell /bin/sh --group nextdom
 fi
 
 if ! [ -f /etc/nextdom/nextdom.conf ]; then

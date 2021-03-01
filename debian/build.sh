@@ -3,7 +3,8 @@
 # Check and install node if necessary
 if ! [ -x "$(command -v node)" ]; then
   echo ">>> Install node"
-  apt-get install -y node npm
+  curl -fsSL https://deb.nodesource.com/setup_15.x | bash -
+  apt-get install -y nodejs
 fi
 
 echo ">>> Copy files"
