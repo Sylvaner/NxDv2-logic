@@ -396,7 +396,7 @@ export class HomeAssistant implements Plugin {
         this.readFromDiscovery(extractedData[1], message);
       }
     } else {
-      const deviceRegex = new RegExp('^(?:' + this.protocolTopics.join('|') + ')\/([^\/]+)$');
+      const deviceRegex = new RegExp('^(?:' + this.protocolTopics.join('|') + ')\/(.*)$');
       const extractedData = deviceRegex.exec(topic);
       try {
         if (extractedData !== null) {
