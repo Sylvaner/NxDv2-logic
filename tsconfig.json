@@ -9,7 +9,8 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,
     "strict": true,
-    "noUnusedLocals": true
+    "noUnusedLocals": true,
+    "skipLibCheck": true
   },
   "exclude": ["tests", "*.ts", "*.js"],
   "lib": ["es2015"]

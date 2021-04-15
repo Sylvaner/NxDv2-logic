@@ -268,17 +268,27 @@ export class HomeAssistant implements Plugin {
    * @param capabilityData Données de la capacité
    */
   extractValueFormat(capabilityData: any): ValueFormat | null {
+    const valueFormat: ValueFormat = {
+      format: 'raw'
+    }; 
     if ('value_template' in capabilityData) {
-      const valueFormat: ValueFormat = {
-        format: 'raw'
-      }
       if (capabilityData.value_template.indexOf('{{ value_json.') === 0) {
         valueFormat.format = 'json';
         // Chemin de la donnée au format JSON
         valueFormat.path = capabilityData.value_template.replace('{{ value_json.', '').replace(' }}', '');
       }
+    } else if ('on_command_type' in capabilityData) {
+      // Cas rencontré avec une ampoule Domotech ou dimmer a un brightness_value_template
+      const customValueTemplate = capabilityData.on_command_type + '_value_template';
+      if (customValueTemplate in capabilityData) {
+        if (capabilityData[customValueTemplate].indexOf('{{ value_json.') === 0) {
+          valueFormat.format = 'json';
+          // Chemin de la donnée au format JSON
+          valueFormat.path = capabilityData[customValueTemplate].replace('{{ value_json.', '').replace(' }}', '');
+        }
+      }
     }
-    return null;
+    return valueFormat;
   }
 
   /**
